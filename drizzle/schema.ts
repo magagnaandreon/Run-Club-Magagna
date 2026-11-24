@@ -124,6 +124,8 @@ export const workoutAssignments = pgTable("workout_assignments", {
   status: assignmentStatusEnum("status").default("assigned").notNull(),
   assignedAt: timestamp("assignedAt", { withTimezone: true }).defaultNow().notNull(),
   completedAt: timestamp("completedAt", { withTimezone: true }),
+  /** The athlete undid a Strava link here, so same-day runs no longer close this workout. */
+  stravaLinkOff: boolean("stravaLinkOff").default(false).notNull(),
 });
 
 export const activities = pgTable(

@@ -336,8 +336,8 @@ export function AthleteSheet({ athleteId, onBack }: { athleteId: number; onBack:
           <SectionTitle title={`Strava · ${strava.runs.length}`} />
           {strava.runs.map((run) => (
             <View key={run.id} style={styles.run}>
-              <Text style={styles.sendTitle}>{run.title}</Text>
-              <Text style={styles.muted}>{formatDay(run.date)}</Text>
+              <Text style={styles.sendTitle}>{run.workoutTitle ?? run.title}</Text>
+              <Text style={styles.muted}>{formatDay(run.date)} · {run.workoutTitle ? "treino enviado" : "corrida livre"}</Text>
               <View style={styles.tags}>
                 <Tag text={`${formatKm(run.distanceMeters, 2)} km`} />
                 <Tag text={formatDuration(run.movingSeconds)} />
@@ -355,7 +355,7 @@ export function AthleteSheet({ athleteId, onBack }: { athleteId: number; onBack:
             <View style={styles.sendTop}>
               <View style={styles.flex}>
                 <Text style={styles.sendTitle}>{activity.title}</Text>
-                <Text style={styles.muted}>{shortDate(activity.completedAt)}{activity.assignmentId ? " · treino enviado" : " · corrida livre"}</Text>
+                <Text style={styles.muted}>{shortDate(activity.completedAt)}{activity.assignmentId ? " · treino enviado" : " · corrida livre"}{activity.source === "strava" ? " · Strava" : ""}</Text>
               </View>
               <View style={[styles.status, review ? styles.statusDone : styles.statusOpen]}><Text style={styles.statusText}>{review ? `${review.rating} de 5` : "Aguarda"}</Text></View>
             </View>
@@ -371,7 +371,7 @@ export function AthleteSheet({ athleteId, onBack }: { athleteId: number; onBack:
                 <Text style={styles.reviewedTitle}>{review.mine ? "Sua avaliação" : `Avaliação de ${review.coachName}`}</Text>
                 <Text style={styles.muted}>{review.comment}</Text>
               </View>
-            ) : athlete.followedByMe && !athlete.isCoachAccount ? <ReviewForm activityId={activity.id} onNotice={setNotice} /> : null}
+            ) : athlete.followedByMe && !athlete.isCoachAccount ? <ReviewForm activityId={activity.id} onNotice={setNotice} aiDraft={activity.source === "manual"} /> : null}
           </View>
         )) : strava.runs.length ? null : <EmptyState icon="footsteps-outline" title="Nenhuma corrida no clube" text={`As corridas que ${firstName} registrar no clube aparecem aqui.`} />
       ) : null}

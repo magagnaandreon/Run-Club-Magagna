@@ -1,0 +1,1 @@
+ALTER TABLE "workout_assignments" ADD COLUMN "stravaLinkOff" boolean DEFAULT false NOT NULL;

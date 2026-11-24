@@ -18,9 +18,10 @@ import { athleteSummary } from "../../shared/club-athletes";
 import { analyzeRuns } from "../../shared/run-analysis";
 import { addDays, paceSecondsPerKm, weeklyBuckets, type TrainingEntry } from "../../shared/insights";
 import { getRunMap } from "../_core/stravaHistory";
+import { linkRun, linkRunsToWorkouts } from "../_core/workoutLinks";
 import { getStravaConnectionStatus } from "../_core/stravaOAuth";
 import { adminProcedure, athleteProcedure, router } from "../_core/trpc";
-import { ALL_TIME_MAX_PAGES, stravaRunEntries } from "./insights";
+import { ALL_TIME_MAX_PAGES, stravaRunEntries, syncStravaWorkouts } from "./insights";
 import { getDb, isUniqueViolation } from "../db";
 import { getProfileAvatarUrl } from "../storage/profile-avatars";
 
@@ -114,12 +115,13 @@ async function liveStravaRuns(userId: number) {
 /** Saved runs of members who shared with coaches. The list avoids Strava's few reads per 15 minutes. */
 async function sharedSavedRuns(db: Db, athleteIds: number[]) {
   if (!athleteIds.length) return [];
-  const rows = await db.select({ athleteId: stravaActivityRecords.userId, startDate: stravaActivityRecords.startDate, summary: stravaActivityRecords.summary })
+  const rows = await db.select({ athleteId: stravaActivityRecords.userId, stravaActivityId: stravaActivityRecords.stravaActivityId, startDate: stravaActivityRecords.startDate, summary: stravaActivityRecords.summary })
     .from(stravaActivityRecords)
     .innerJoin(stravaConnections, eq(stravaConnections.userId, stravaActivityRecords.userId))
     .where(and(inArray(stravaActivityRecords.userId, athleteIds), isNotNull(stravaConnections.coachShareAt)));
-  return rows.map(({ athleteId, startDate, summary }) => ({
+  return rows.map(({ athleteId, stravaActivityId, startDate, summary }) => ({
     athleteId,
+    stravaActivityId,
     date: (summary.startDateLocal || startDate.toISOString()).slice(0, 10),
     distanceMeters: Math.round(summary.distanceMeters),
     reviewed: true,
@@ -173,16 +175,18 @@ async function followersOf(db: Db, athleteIds: number[], coachId: number) {
   return byAthlete;
 }
 
-/** Runs the athlete shared with the club. Strava stays private to the athlete. */
+/** Runs the athlete shared with the club: their logs, plus Strava runs linked to a workout if they allowed it. */
 async function sharedRuns(db: Db, athleteIds: number[]) {
   if (!athleteIds.length) return [];
   return db.select({ activity: activities, review: activityReviews, reviewerName: users.name, reviewerProfileName: users.profileName })
     .from(activities)
     .leftJoin(activityReviews, eq(activityReviews.activityId, activities.id))
     .leftJoin(users, eq(users.id, activityReviews.coachId))
-    .where(and(inArray(activities.athleteId, athleteIds), eq(activities.source, "manual"), eq(activities.shareWithCoach, true)))
+    .where(and(inArray(activities.athleteId, athleteIds), eq(activities.shareWithCoach, true)))
     .orderBy(desc(activities.completedAt));
 }
+
+const LINKABLE_RUNS = 5;
 
 const runDate = (completedAt: Date) => completedAt.toISOString().slice(0, 10);
 
@@ -242,6 +246,8 @@ export const clubRouter = router({
           or(gte(workoutAssignments.scheduledDate, addDays(input.today, -56)), eq(workoutAssignments.status, "assigned")),
         )) : [],
     ]);
+    // A run linked to a workout is already in `runs`, so it must not count again from Strava.
+    const linked = new Set(runs.flatMap(({ activity }) => (activity.source === "strava" ? [activity.externalActivityId] : [])));
     return athletes.map(({ createdAt, lastSignedIn, ...athlete }) => {
       const coaches = followers.get(athlete.userId) ?? [];
       return {
@@ -258,8 +264,8 @@ export const clubRouter = router({
               distanceMeters: run.activity.distanceMeters,
               reviewed: Boolean(run.review),
             })),
-            ...(athlete.userId === ownId ? own.entries.map(({ date, distanceMeters }) => ({ date, distanceMeters, reviewed: true })) : []),
-            ...saved.filter((run) => run.athleteId === athlete.userId),
+            ...(athlete.userId === ownId ? own.entries.filter((run) => !linked.has(run.id.replace("strava-", ""))).map(({ date, distanceMeters }) => ({ date, distanceMeters, reviewed: true })) : []),
+            ...saved.filter((run) => run.athleteId === athlete.userId && !linked.has(run.stravaActivityId)),
           ],
           input.today,
         ),
@@ -277,12 +283,13 @@ export const clubRouter = router({
     const [connection] = await db.select({ coachShareAt: stravaConnections.coachShareAt }).from(stravaConnections)
       .where(eq(stravaConnections.userId, athlete.userId)).limit(1);
     const canSeeStrava = isMe || Boolean(connection?.coachShareAt);
-    const [followers, runs, own, sends] = await Promise.all([
+    const own = canSeeStrava
+      ? await liveStravaRuns(isMe ? ctx.user.id : athlete.userId)
+      : { entries: [] as TrainingEntry[], status: connection ? "private" as const : "off" as const };
+    await linkRunsToWorkouts(athlete.userId, own.entries, input.today);
+    const [followers, runs, sends] = await Promise.all([
       followersOf(db, [athlete.userId], ctx.user.id),
       sharedRuns(db, [athlete.userId]),
-      canSeeStrava
-        ? liveStravaRuns(isMe ? ctx.user.id : athlete.userId)
-        : { entries: [] as TrainingEntry[], status: connection ? "private" as const : "off" as const },
       db.select({
         id: workoutAssignments.id,
         scheduledDate: workoutAssignments.scheduledDate,
@@ -300,7 +307,12 @@ export const clubRouter = router({
         .where(eq(workoutAssignments.athleteId, athlete.userId))
         .orderBy(desc(workoutAssignments.scheduledDate)),
     ]);
-    const entries: TrainingEntry[] = runs.map(({ activity }) => ({
+    // A linked run counts once: from Strava when it is there, because Strava has more detail.
+    const workoutOf = new Map(runs.filter(({ activity }) => activity.source === "strava").map(({ activity }) => [`strava-${activity.externalActivityId}`, activity.title]));
+    const liveRuns = own.entries.map((run) => ({ ...run, workoutTitle: workoutOf.get(run.id) ?? null }));
+    const liveIds = new Set(liveRuns.map((run) => run.id));
+    const clubRuns = runs.filter(({ activity }) => activity.source !== "strava" || !liveIds.has(`strava-${activity.externalActivityId}`));
+    const entries: TrainingEntry[] = clubRuns.map(({ activity }) => ({
       id: String(activity.id),
       source: "club",
       title: activity.title,
@@ -311,7 +323,7 @@ export const clubRouter = router({
       elevationMeters: 0,
       averageHeartRate: null,
     }));
-    const allEntries = [...entries, ...own.entries];
+    const allEntries = [...entries, ...liveRuns];
     const distanceMeters = allEntries.reduce((sum, entry) => sum + entry.distanceMeters, 0);
     const durationSeconds = allEntries.reduce((sum, entry) => sum + entry.movingSeconds, 0);
     const ratings = runs.flatMap(({ review }) => (review ? [review.rating] : []));
@@ -322,8 +334,8 @@ export const clubRouter = router({
       summary: athleteSummary(
         sends,
         [
-          ...entries.map((entry, index) => ({ date: entry.date, distanceMeters: entry.distanceMeters, reviewed: Boolean(runs[index].review) })),
-          ...own.entries.map(({ date, distanceMeters }) => ({ date, distanceMeters, reviewed: true })),
+          ...entries.map((entry, index) => ({ date: entry.date, distanceMeters: entry.distanceMeters, reviewed: Boolean(clubRuns[index].review) })),
+          ...liveRuns.map(({ id, date, distanceMeters }) => ({ date, distanceMeters, reviewed: !workoutOf.has(id) || runs.some(({ activity, review }) => Boolean(review) && `strava-${activity.externalActivityId}` === id) })),
         ],
         input.today,
       ),
@@ -338,7 +350,7 @@ export const clubRouter = router({
       },
       weeks: weeklyBuckets(allEntries, input.today, 8),
       analysis: analyzeRuns(allEntries, input.today),
-      strava: { status: own.status, runs: own.entries },
+      strava: { status: own.status, runs: liveRuns },
       places: canSeeStrava ? (await getRunMap(athlete.userId)).places : [],
       assignments: sends.map(({ coachName, coachProfileName, ...send }) => ({
         ...send,
@@ -563,12 +575,14 @@ export const clubRouter = router({
     return { assignmentId: inserted[0]?.id ?? null };
   }),
 
-  myAssignments: athleteProcedure.query(async ({ ctx }) => {
+  myAssignments: athleteProcedure.input(z.object({ today: scheduledDateInput }).optional()).query(async ({ ctx, input }) => {
     const db = await requireDb();
+    await syncStravaWorkouts(ctx.user.id, input?.today ?? new Date().toISOString().slice(0, 10));
     const rows = await db.select({
       id: workoutAssignments.id,
       scheduledDate: workoutAssignments.scheduledDate,
       status: workoutAssignments.status,
+      run: { source: activities.source, distanceMeters: activities.distanceMeters, durationSeconds: activities.durationSeconds },
       workoutId: workouts.id,
       title: workouts.title,
       objective: workouts.objective,
@@ -576,6 +590,7 @@ export const clubRouter = router({
     })
       .from(workoutAssignments)
       .innerJoin(workouts, eq(workoutAssignments.workoutId, workouts.id))
+      .leftJoin(activities, eq(activities.assignmentId, workoutAssignments.id))
       .where(eq(workoutAssignments.athleteId, ctx.user.id))
       .orderBy(workoutAssignments.scheduledDate);
     if (!rows.length) return [];
@@ -592,6 +607,47 @@ export const clubRouter = router({
     const reviews = await db.select().from(activityReviews)
       .where(inArray(activityReviews.activityId, rows.map((activity) => activity.id)));
     return rows.map((activity) => ({ ...activity, review: reviews.find((review) => review.activityId === activity.id) ?? null }));
+  }),
+
+  /** Recent Strava runs not yet tied to a workout, for a run done on another day. */
+  linkableRuns: athleteProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    const { entries } = await liveStravaRuns(ctx.user.id);
+    const linked = await db.select({ id: activities.externalActivityId }).from(activities)
+      .where(and(eq(activities.athleteId, ctx.user.id), eq(activities.source, "strava")));
+    const taken = new Set(linked.map((row) => `strava-${row.id}`));
+    return entries
+      .filter((run) => !taken.has(run.id))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, LINKABLE_RUNS)
+      .map(({ id, title, date, distanceMeters, movingSeconds }) => ({ id, title, date, distanceMeters, movingSeconds }));
+  }),
+
+  linkStravaRun: athleteProcedure.input(z.object({ assignmentId: z.number().int().positive(), runId: z.string().min(1).max(80) })).mutation(async ({ ctx, input }) => {
+    const db = await requireDb();
+    const [workout] = await db.select({ id: workoutAssignments.id, title: workouts.title })
+      .from(workoutAssignments)
+      .innerJoin(workouts, eq(workouts.id, workoutAssignments.workoutId))
+      .where(and(eq(workoutAssignments.id, input.assignmentId), eq(workoutAssignments.athleteId, ctx.user.id), eq(workoutAssignments.status, "assigned")))
+      .limit(1);
+    if (!workout) throw new TRPCError({ code: "NOT_FOUND", message: "Treino não encontrado ou já concluído." });
+    const run = (await liveStravaRuns(ctx.user.id)).entries.find((entry) => entry.id === input.runId);
+    if (!run) throw new TRPCError({ code: "NOT_FOUND", message: "Corrida não encontrada no seu Strava." });
+    if (!(await linkRun(ctx.user.id, workout, run))) throw new TRPCError({ code: "CONFLICT", message: "Esta corrida já está ligada a outro treino." });
+    return { linked: true };
+  }),
+
+  /** Undoes a Strava link and stops that workout from being closed by a run of the same day. */
+  unlinkStravaRun: athleteProcedure.input(z.object({ assignmentId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await requireDb();
+    return db.transaction(async (tx) => {
+      const removed = await tx.delete(activities)
+        .where(and(eq(activities.assignmentId, input.assignmentId), eq(activities.athleteId, ctx.user.id), eq(activities.source, "strava")))
+        .returning({ id: activities.id });
+      if (!removed.length) throw new TRPCError({ code: "NOT_FOUND", message: "Este treino não está ligado a uma corrida do Strava." });
+      await tx.update(workoutAssignments).set({ status: "assigned", completedAt: null, stravaLinkOff: true }).where(eq(workoutAssignments.id, input.assignmentId));
+      return { unlinked: true };
+    });
   }),
 
   submitActivity: athleteProcedure.input(z.object({
@@ -666,8 +722,6 @@ export const clubRouter = router({
       .leftJoin(activityReviews, eq(activityReviews.activityId, activities.id))
       .where(and(
         eq(coachAthletes.coachId, ctx.user.id),
-        // Strava-imported activities remain private to the athlete even if a legacy row is present.
-        eq(activities.source, "manual"),
         eq(activities.shareWithCoach, true),
       ))
       .orderBy(desc(activities.completedAt));
@@ -690,7 +744,6 @@ export const clubRouter = router({
       .where(and(
         eq(activities.id, input.activityId),
         eq(coachAthletes.coachId, ctx.user.id),
-        eq(activities.source, "manual"),
         eq(activities.shareWithCoach, true),
       )).limit(1);
     if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Atividade não encontrada ou não compartilhada com você." });

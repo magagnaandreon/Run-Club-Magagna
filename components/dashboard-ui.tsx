@@ -238,8 +238,18 @@ export function SourceBadge({ source }: { source: "club" | "strava" }) {
   );
 }
 
-export function TrainingRow({ title, date, source, distanceMeters, movingSeconds, paceSecondsPerKm, onPress }: {
+/** Tells the coach's workouts apart from runs outside the plan. */
+export function KindBadge({ workout }: { workout: boolean }) {
+  return (
+    <View style={[styles.kind, workout && styles.kindWorkout]}>
+      <Text style={styles.kindText}>{workout ? "TREINO" : "CORRIDA LIVRE"}</Text>
+    </View>
+  );
+}
+
+export function TrainingRow({ title, workout, date, source, distanceMeters, movingSeconds, paceSecondsPerKm, onPress }: {
   title: string;
+  workout: boolean;
   date: string;
   source: "club" | "strava";
   distanceMeters: number;
@@ -258,6 +268,7 @@ export function TrainingRow({ title, date, source, distanceMeters, movingSeconds
           <Text style={styles.trainingTitle} numberOfLines={1}>{title}</Text>
           <SourceBadge source={source} />
         </View>
+        <KindBadge workout={workout} />
         <View style={styles.trainingMetrics}>
           <Text style={styles.trainingMetricStrong}>{formatKm(distanceMeters, 2)} km</Text>
           <Text style={styles.trainingDot}>·</Text>
@@ -357,6 +368,9 @@ const styles = StyleSheet.create({
   source: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   sourceStrava: { backgroundColor: "#FFE4D6" },
   sourceClub: { backgroundColor: "#EEF8C6" },
+  kind: { alignSelf: "flex-start", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: C.stone, marginBottom: 3 },
+  kindWorkout: { backgroundColor: C.lime },
+  kindText: { color: C.ink, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
   sourceText: { color: C.ink, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
   sourceTextStrava: { color: "#B23500" },
 

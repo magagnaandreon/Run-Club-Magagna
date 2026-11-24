@@ -43,7 +43,7 @@ export default function TodayScreen() {
 
 function AthleteToday() {
   const router = useRouter();
-  const assignments = trpc.club.myAssignments.useQuery();
+  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() });
   const upcoming = assignments.data?.find((assignment) => assignment.status === "assigned");
   // The plan of this calendar week, Monday to Sunday.
   const weekFrom = startOfWeek(localToday());

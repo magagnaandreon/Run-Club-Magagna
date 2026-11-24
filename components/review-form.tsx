@@ -7,7 +7,7 @@ import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 
 /** Stars, an optional AI draft and the comment the athlete receives about one run. */
-export function ReviewForm({ activityId, onNotice }: { activityId: number; onNotice: (text: string) => void }) {
+export function ReviewForm({ activityId, onNotice, aiDraft = true }: { activityId: number; onNotice: (text: string) => void; aiDraft?: boolean }) {
   const utils = trpc.useUtils();
   const refresh = () => Promise.all([utils.club.coachActivityFeed.invalidate(), utils.club.clubAthletes.invalidate(), utils.club.athleteDetail.invalidate()]);
   const review = trpc.club.reviewActivity.useMutation({ onSuccess: refresh });
@@ -49,10 +49,10 @@ export function ReviewForm({ activityId, onNotice }: { activityId: number; onNot
           </Pressable>
         ))}
       </View>
-      <Pressable disabled={draft.isPending} onPress={askAi} style={({ pressed }) => [styles.ai, draft.isPending && styles.disabled, pressed && styles.pressed]}>
+      {aiDraft ? <Pressable disabled={draft.isPending} onPress={askAi} style={({ pressed }) => [styles.ai, draft.isPending && styles.disabled, pressed && styles.pressed]}>
         {draft.isPending ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="sparkles" size={14} color={C.ink} />}
         <Text style={styles.aiText}>Rascunho com IA</Text>
-      </Pressable>
+      </Pressable> : null}
       <TextInput value={comment} onChangeText={setComment} placeholder="Deixe seu comentário para o aluno" placeholderTextColor={C.muted} multiline style={styles.input} accessibilityLabel="Comentário para o aluno" />
       <Pressable disabled={review.isPending} onPress={save} style={({ pressed }) => [styles.send, review.isPending && styles.disabled, pressed && styles.pressed]}>
         <Text style={styles.sendText}>Enviar avaliação</Text>

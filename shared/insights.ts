@@ -19,6 +19,8 @@ export type TrainingEntry = {
   movingSeconds: number;
   elevationMeters: number;
   averageHeartRate: number | null;
+  /** Name of the coach's workout this run fulfilled; absent on a free run. */
+  workoutTitle?: string | null;
 };
 
 export type InsightTotals = {

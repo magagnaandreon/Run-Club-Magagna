@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, isNotNull, isNull, max, sql } from "drizzle-orm";
 
-import { stravaActivityRecords, stravaConnections } from "../../drizzle/schema";
+import { activities, stravaActivityRecords, stravaConnections } from "../../drizzle/schema";
 import type { RunPlace } from "../../shared/brazil-map";
 import { getDb } from "../db";
 import { placesOnRoute } from "./municipalities";
@@ -141,6 +141,7 @@ export async function updateCoachShare(userId: number, share: boolean) {
   const updated = await db.update(stravaConnections).set({ coachShareAt: share ? new Date() : null })
     .where(eq(stravaConnections.userId, userId)).returning({ id: stravaConnections.id });
   if (!updated.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Conecte sua conta Strava primeiro." });
+  await db.update(activities).set({ shareWithCoach: share }).where(and(eq(activities.athleteId, userId), eq(activities.source, "strava")));
   return getRunMap(userId);
 }
 

@@ -135,13 +135,15 @@ export function TrainingDashboard({ enabled = true, showRecent = true, aside, ti
   const recentBlock = showRecent ? (
     <>
       <View style={desktop ? styles.gapDesktop : styles.gap} />
-      <SectionTitle title="Treinos da semana" action={data.stravaConnected ? "Strava" : undefined} onPress={() => router.push("/strava")} />
+      <SectionTitle title="Atividades da semana" action={data.stravaConnected ? "Strava" : undefined} onPress={() => router.push("/strava")} />
       {data.recent.length ? (
         <View style={styles.list}>
+          <Text style={styles.kindNote}>Treino é o que o treinador passou. A corrida do Strava vira treino sozinha quando cai no dia dele; o resto é corrida livre.</Text>
           {data.recent.map((entry) => (
             <TrainingRow
               key={entry.id}
-              title={entry.title}
+              title={entry.workoutTitle ?? entry.title}
+              workout={Boolean(entry.workoutTitle)}
               date={entry.date}
               source={entry.source}
               distanceMeters={entry.distanceMeters}
@@ -213,6 +215,7 @@ function WeekMetric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  kindNote: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   pressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
   stack: { gap: 14 },
   skeletonRow: { flexDirection: "row", gap: 10 },

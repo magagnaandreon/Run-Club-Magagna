@@ -6,7 +6,7 @@ import { BarChart, DeltaChip, EmptyState, Explain, PeriodSelector, Skeleton, del
 import { RunAnalysisSection } from "@/components/run-analysis";
 import { C, PrimaryButton, ProgressRing, Screen, SectionTitle } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
-import { useInsights } from "@/hooks/use-insights";
+import { localToday, useInsights } from "@/hooks/use-insights";
 import { useIsDesktop } from "@/hooks/use-layout";
 import { trpc } from "@/lib/trpc";
 import { calendarWeeks, daysInRange } from "@/shared/insights";
@@ -19,7 +19,7 @@ export default function ProgressScreen() {
   const isCoach = user?.role === "admin";
   const desktop = useIsDesktop();
   const insights = useInsights(Boolean(user));
-  const assignments = trpc.club.myAssignments.useQuery(undefined, { enabled: Boolean(user) && !isCoach });
+  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() }, { enabled: Boolean(user) && !isCoach });
   const coachFeed = trpc.club.coachActivityFeed.useQuery(undefined, { enabled: isCoach });
   const data = insights.data;
 
@@ -149,7 +149,7 @@ export default function ProgressScreen() {
               <Text style={styles.planLabel}>treinos do plano concluídos</Text>
             </View>
             <View style={styles.track}><View style={[styles.trackFill, { width: planned.length ? `${Math.round((plannedDone / planned.length) * 100)}%` : "0%" }]} /></View>
-            <Text style={styles.planText}>{planned.length ? "Treinos atribuídos com data dentro do período escolhido." : "Nenhum treino do treinador com data neste período."}</Text>
+            <Text style={styles.planText}>{planned.length ? `Treinos atribuídos com data dentro do período. Fora do plano: ${period.freeRuns} ${period.freeRuns === 1 ? "corrida livre" : "corridas livres"}.` : "Nenhum treino do treinador com data neste período."}</Text>
           </View>
         </>
       )}

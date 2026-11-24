@@ -57,6 +57,13 @@
       "when": 1794059758562,
       "tag": "0007_safe_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794068438937,
+      "tag": "0008_smiling_fenris",
+      "breakpoints": true
     }
   ]
 }

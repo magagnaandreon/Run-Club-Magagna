@@ -9,7 +9,7 @@ import { and, eq, inArray, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import type { Express, Request, Response as ExpressResponse } from "express";
 
-import { stravaActivityRecords, stravaConnections, stravaOAuthStates } from "../../drizzle/schema";
+import { activities, stravaActivityRecords, stravaConnections, stravaOAuthStates } from "../../drizzle/schema";
 import {
   RUN_CLUB_APP_SCHEME,
   STRAVA_CALLBACK_PATH as STRAVA_CLIENT_CALLBACK_PATH,
@@ -679,6 +679,7 @@ export async function disconnectStrava(userId: number) {
     .where(eq(stravaConnections.stravaAthleteHash, connection.stravaAthleteHash));
   const userIds = profiles.map((profile) => profile.userId);
   await db.delete(stravaActivityRecords).where(inArray(stravaActivityRecords.userId, userIds));
+  await db.delete(activities).where(and(inArray(activities.athleteId, userIds), eq(activities.source, "strava")));
   await db.delete(stravaConnections).where(inArray(stravaConnections.userId, userIds));
   await db.delete(stravaOAuthStates).where(eq(stravaOAuthStates.userId, userId));
   if (!tokens) return { disconnected: true as const, remoteRevoked: false };

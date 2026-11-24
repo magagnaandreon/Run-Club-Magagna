@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { DateChips, EmptyState, Segmented, SourceBadge, STRAVA_ORANGE, formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
+import { DateChips, EmptyState, KindBadge, Segmented, SourceBadge, STRAVA_ORANGE, formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
 import { AppHeader, C, CoachNote, Pill, Screen, SectionTitle } from "@/components/run-ui";
 import { CoachAthletes } from "@/components/coach-athletes";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -109,7 +109,7 @@ function CoachClub() {
               {activity.perceivedEffort ? <MetricChip icon="pulse-outline" text={effortLabels[activity.perceivedEffort]} /> : null}
             </View>
             {activity.athleteNote ? <Text style={styles.athleteNote}>“{activity.athleteNote}”</Text> : null}
-            {review ? <View style={styles.reviewed}><Text style={styles.reviewedTitle}>Sua avaliação · {review.rating}/5</Text><Text style={styles.cardDetail}>{review.comment}</Text></View> : <ReviewForm activityId={activity.id} onNotice={setNotice} />}
+            {review ? <View style={styles.reviewed}><Text style={styles.reviewedTitle}>Sua avaliação · {review.rating}/5</Text><Text style={styles.cardDetail}>{review.comment}</Text></View> : <ReviewForm activityId={activity.id} onNotice={setNotice} aiDraft={activity.source === "manual"} />}
           </View>
         )) : <EmptyState icon="checkmark-done-outline" title="Tudo em dia" text="Os treinos registrados pelos alunos aparecem aqui para você avaliar." />}
         <View style={styles.gap} />
@@ -122,8 +122,11 @@ function CoachClub() {
 function AthleteClub() {
   const router = useRouter();
   const utils = trpc.useUtils();
-  const assignments = trpc.club.myAssignments.useQuery();
+  const assignments = trpc.club.myAssignments.useQuery({ today: localDate() });
   const activities = trpc.club.myActivities.useQuery();
+  const refreshWork = () => Promise.all([utils.club.myActivities.invalidate(), utils.club.myAssignments.invalidate(), utils.club.linkableRuns.invalidate(), utils.insights.overview.invalidate()]);
+  const linkRun = trpc.club.linkStravaRun.useMutation({ onSuccess: refreshWork });
+  const unlinkRun = trpc.club.unlinkStravaRun.useMutation({ onSuccess: refreshWork });
   const submit = trpc.club.submitActivity.useMutation({ onSuccess: async () => { await Promise.all([utils.club.myActivities.invalidate(), utils.club.myAssignments.invalidate()]); } });
   const [drafts, setDrafts] = useState<Record<number, ActivityDraft>>({});
   const [manualDraft, setManualDraft] = useState({ title: "Corrida livre", ...emptyActivityDraft() });
@@ -148,6 +151,25 @@ function AthleteClub() {
     }
   };
 
+  const link = async (assignmentId: number, runId: string) => {
+    try {
+      await linkRun.mutateAsync({ assignmentId, runId });
+      setOpenLog(null);
+      setNotice("Corrida ligada ao treino.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Não foi possível ligar a corrida.");
+    }
+  };
+
+  const unlink = async (assignmentId: number) => {
+    try {
+      await unlinkRun.mutateAsync({ assignmentId });
+      setNotice("Treino reaberto. Ele não será mais ligado sozinho a corridas do mesmo dia.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Não foi possível desfazer.");
+    }
+  };
+
   const onManualSubmit = async () => {
     const distanceMeters = Math.round(Number(manualDraft.distance.replace(",", ".")) * 1000);
     const durationSeconds = Math.round(Number(manualDraft.minutes) * 60);
@@ -166,6 +188,7 @@ function AthleteClub() {
 
   const [tab, setTab] = useState<AthleteTab>("agenda");
   const [openLog, setOpenLog] = useState<number | null>(null);
+  const linkable = trpc.club.linkableRuns.useQuery(undefined, { enabled: openLog !== null });
   if (assignments.isLoading || activities.isLoading) return <LoadingState />;
   const open = (assignments.data ?? []).filter((assignment) => assignment.status === "assigned");
   const done = (assignments.data ?? []).filter((assignment) => assignment.status !== "assigned");
@@ -193,8 +216,19 @@ function AthleteClub() {
           </View>
         </View>)}
       </View> : null}
+      {assignment.run?.source === "strava" ? <View style={styles.linkedRun}>
+        <Text style={styles.linkedText}>Feito com a corrida do Strava: {formatKm(assignment.run.distanceMeters, 2)} km em {Math.round(assignment.run.durationSeconds / 60)} min.</Text>
+        <Pressable accessibilityRole="button" disabled={unlinkRun.isPending} onPress={() => unlink(assignment.id)} style={({ pressed }) => pressed && styles.pressed}><Text style={styles.linkAction}>Não foi este treino</Text></Pressable>
+      </View> : null}
       {!completed ? openLog === assignment.id ? <View style={styles.logBox}>
-        <Text style={styles.formSection}>Como foi?</Text>
+        {linkable.data?.length ? <>
+          <Text style={styles.formSection}>Foi uma destas corridas do Strava?</Text>
+          {linkable.data.map((run) => <Pressable key={run.id} accessibilityRole="button" disabled={linkRun.isPending} onPress={() => link(assignment.id, run.id)} style={({ pressed }) => [styles.runChoice, pressed && styles.pressed]}>
+            <View style={styles.flexCopy}><Text style={styles.stepLabel} numberOfLines={1}>{run.title}</Text><Text style={styles.cardDetail}>{formatDay(run.date)} · {formatKm(run.distanceMeters, 2)} km · {Math.round(run.movingSeconds / 60)} min</Text></View>
+            <Text style={styles.linkAction}>Usar</Text>
+          </Pressable>)}
+          <Text style={styles.formSection}>Ou preencha à mão</Text>
+        </> : <Text style={styles.formSection}>Como foi?</Text>}
         <DateChips past value={draft.date} onChange={(date) => setDraft({ date })} />
         <View style={styles.metricsInputRow}>
           <TextInput keyboardType="decimal-pad" value={draft.distance} onChangeText={(distance) => setDraft({ distance })} placeholder="km" placeholderTextColor={C.muted} style={[styles.input, styles.metricInput]} accessibilityLabel="Distância em quilômetros" />
@@ -254,7 +288,7 @@ function AthleteClub() {
       {tab === "history" ? <>
         {activities.data?.length ? <View style={styles.list}>{activities.data.map((activity) => (
           <View key={activity.id} style={styles.activityCard}>
-            <View style={styles.activityTop}><SourceBadge source={activity.source === "strava" ? "strava" : "club"} />{activity.review ? <Pill label={`AVALIADO · ${activity.review.rating}/5`} tone="lime" /> : <Pill label="AGUARDA RETORNO" tone="light" />}</View>
+            <View style={styles.activityTop}><View style={styles.badges}><KindBadge workout={Boolean(activity.assignmentId)} /><SourceBadge source={activity.source === "strava" ? "strava" : "club"} /></View>{activity.review ? <Pill label={`AVALIADO · ${activity.review.rating}/5`} tone="lime" /> : <Pill label="AGUARDA RETORNO" tone="light" />}</View>
             <Text style={styles.activityTitle}>{activity.title}</Text>
             <View style={styles.metricChips}>
               <MetricChip icon="calendar-outline" text={new Date(activity.completedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })} />
@@ -283,6 +317,11 @@ function MetricChip({ icon, text }: { icon: "map-outline" | "time-outline" | "sp
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.paper },
   gap: { height: 27 },
+  badges: { flexDirection: "row", alignItems: "center", gap: 6 },
+  linkedRun: { gap: 6, padding: 12, borderRadius: 14, backgroundColor: C.paper },
+  linkedText: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "700" },
+  linkAction: { color: C.ink, fontSize: 12, fontWeight: "900", textDecorationLine: "underline" },
+  runChoice: { flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: 12, backgroundColor: C.white },
   tabGap: { height: 18 },
   list: { gap: 10 },
   helper: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600", marginBottom: 10 },

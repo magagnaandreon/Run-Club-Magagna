@@ -19,6 +19,7 @@ import { DIAGNOSTIC_SCHEMA, analyzeRuns, diagnosticFacts, normalizeDiagnostic } 
 import type { StravaActivitySummary } from "../../shared/strava";
 import { cohereJson, isCohereConfigured } from "../_core/cohere";
 import { getStravaConnectionStatus, listStravaActivitiesSince } from "../_core/stravaOAuth";
+import { linkRunsToWorkouts } from "../_core/workoutLinks";
 import { memberProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 
@@ -40,13 +41,12 @@ async function cachedStravaActivities(userId: number, afterEpochSeconds: number,
   return fresh;
 }
 
-/** The member's own Strava runs as training entries, leaving out those already imported. */
-export async function stravaRunEntries(userId: number, afterEpochSeconds: number, maxPages: number, importedIds: Set<string | null> = new Set()) {
+/** The member's own Strava runs as training entries. */
+export async function stravaRunEntries(userId: number, afterEpochSeconds: number, maxPages: number) {
   const { items, truncated } = await cachedStravaActivities(userId, afterEpochSeconds, maxPages);
   const entries: TrainingEntry[] = [];
   for (const item of items) {
     if (!RUN_SPORTS.has(item.sportType) && !RUN_SPORTS.has(item.type)) continue;
-    if (importedIds.has(item.id)) continue;
     const date = (item.startDateLocal || item.startDate).slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     entries.push({
@@ -62,6 +62,44 @@ export async function stravaRunEntries(userId: number, afterEpochSeconds: number
     });
   }
   return { entries, truncated };
+}
+
+const SYNC_DAYS = 35;
+const SYNC_MAX_PAGES = 2;
+
+type ClubRow = typeof activities.$inferSelect;
+
+/** Club logs plus Strava runs. A run linked to a workout keeps Strava's detail and gains the workout's name. */
+function mergeEntries(rows: ClubRow[], live: TrainingEntry[], tzOffsetMinutes: number): TrainingEntry[] {
+  const liveIds = new Set(live.map((entry) => entry.id));
+  const stravaId = (row: ClubRow) => `strava-${row.externalActivityId}`;
+  const workouts = new Map(rows.filter((row) => row.source === "strava" && row.assignmentId).map((row) => [stravaId(row), row.title]));
+  return [
+    ...rows.filter((row) => row.source !== "strava" || !liveIds.has(stravaId(row))).map((row): TrainingEntry => ({
+      id: `club-${row.id}`,
+      source: row.source === "strava" ? "strava" : "club",
+      title: row.title,
+      date: localDay(row.completedAt, tzOffsetMinutes),
+      startLocal: null,
+      distanceMeters: row.distanceMeters,
+      movingSeconds: row.durationSeconds,
+      elevationMeters: 0,
+      averageHeartRate: null,
+      workoutTitle: row.assignmentId ? row.title : null,
+    })),
+    ...live.map((entry) => ({ ...entry, workoutTitle: workouts.get(entry.id) ?? null })),
+  ];
+}
+
+/** Lets Strava close the member's workouts when the app reads them. Never blocks the read. */
+export async function syncStravaWorkouts(userId: number, today: string) {
+  try {
+    if (!(await getStravaConnectionStatus(userId)).connected) return;
+    const after = Date.parse(`${addDays(today, -SYNC_DAYS)}T00:00:00.000Z`) / 1000;
+    await linkRunsToWorkouts(userId, (await stravaRunEntries(userId, after, SYNC_MAX_PAGES)).entries, today);
+  } catch {
+    // The agenda still works from club logs while Strava is unavailable.
+  }
 }
 
 /** Shifts a UTC instant into the runner's calendar day using the offset the app reports. */
@@ -101,26 +139,15 @@ async function memberRuns(userId: number, tzOffsetMinutes: number) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Banco de dados indisponível." });
   const rows = await db.select().from(activities).where(eq(activities.athleteId, userId));
-  const entries: TrainingEntry[] = rows.map((row) => ({
-    id: `club-${row.id}`,
-    source: "club",
-    title: row.title,
-    date: localDay(row.completedAt, tzOffsetMinutes),
-    startLocal: null,
-    distanceMeters: row.distanceMeters,
-    movingSeconds: row.durationSeconds,
-    elevationMeters: 0,
-    averageHeartRate: null,
-  }));
+  let live: TrainingEntry[] = [];
   if ((await getStravaConnectionStatus(userId)).connected) {
-    const imported = new Set(rows.filter((row) => row.source === "strava").map((row) => row.externalActivityId));
     try {
-      entries.push(...(await stravaRunEntries(userId, 0, ALL_TIME_MAX_PAGES, imported)).entries);
+      live = (await stravaRunEntries(userId, 0, ALL_TIME_MAX_PAGES)).entries;
     } catch {
       // The analysis still works from club logs while Strava is unavailable.
     }
   }
-  return entries;
+  return mergeEntries(rows, live, tzOffsetMinutes);
 }
 
 export const insightsRouter = router({
@@ -156,33 +183,24 @@ export const insightsRouter = router({
       const twoPeriodsFrom = days ? addDays(periodFrom, -days) : null;
       const fetchFrom = twoPeriodsFrom && twoPeriodsFrom > lastWeekFrom ? lastWeekFrom : twoPeriodsFrom;
 
-      const clubRows = await db.select().from(activities).where(eq(activities.athleteId, ctx.user.id)).orderBy(desc(activities.completedAt));
-      const importedStravaIds = new Set(clubRows.filter((row) => row.source === "strava" && row.externalActivityId).map((row) => row.externalActivityId));
-      const entries: TrainingEntry[] = clubRows.map((row) => ({
-        id: `club-${row.id}`,
-        source: "club",
-        title: row.title,
-        date: localDay(row.completedAt, tzOffsetMinutes),
-        startLocal: null,
-        distanceMeters: row.distanceMeters,
-        movingSeconds: row.durationSeconds,
-        elevationMeters: 0,
-        averageHeartRate: null,
-      }));
-
       const strava = await getStravaConnectionStatus(ctx.user.id);
       let stravaError: string | null = null;
       let truncated = false;
+      let live: TrainingEntry[] = [];
       if (strava.connected) {
         try {
           const after = fetchFrom ? Date.parse(`${fetchFrom}T00:00:00.000Z`) / 1000 : 0;
-          const result = await stravaRunEntries(ctx.user.id, after, days ? 3 : ALL_TIME_MAX_PAGES, importedStravaIds);
+          const result = await stravaRunEntries(ctx.user.id, after, days ? 3 : ALL_TIME_MAX_PAGES);
           truncated = result.truncated;
-          entries.push(...result.entries);
+          live = result.entries;
+          await linkRunsToWorkouts(ctx.user.id, live, today);
         } catch (error) {
           stravaError = error instanceof TRPCError ? error.message : "Não foi possível consultar o Strava agora.";
         }
       }
+
+      const clubRows = await db.select().from(activities).where(eq(activities.athleteId, ctx.user.id)).orderBy(desc(activities.completedAt));
+      const entries = mergeEntries(clubRows, live, tzOffsetMinutes);
 
       // "This week" like Strava: Monday to Sunday, compared with last week up to the same weekday.
       const weekTo = addDays(weekFrom, 6);
@@ -201,6 +219,7 @@ export const insightsRouter = router({
           from: days ? periodFrom : entries.reduce<string | null>((min, entry) => (min === null || entry.date < min ? entry.date : min), null),
           to: today,
           ...totals(periodEntries),
+          freeRuns: periodEntries.filter((entry) => !entry.workoutTitle).length,
           previousDistanceMeters: previousPeriod ? totals(previousPeriod).distanceMeters : null,
         },
         series: periodSeries(periodEntries, period, today),

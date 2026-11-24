@@ -6,6 +6,7 @@ import { CoachPlans } from "@/components/coach-plans";
 import { EmptyState } from "@/components/dashboard-ui";
 import { C, Pill, PrimaryButton, Row, Screen, SectionTitle } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
+import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 
 export default function PlansScreen() {
@@ -17,7 +18,7 @@ export default function PlansScreen() {
 function AthletePlans() {
   const router = useRouter();
   const { user } = useAuth();
-  const assignments = trpc.club.myAssignments.useQuery(undefined, { enabled: Boolean(user) });
+  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() }, { enabled: Boolean(user) });
   const completedCount = (assignments.data ?? []).filter((assignment) => assignment.status === "completed").length;
   const nextAssignment = assignments.data?.find((assignment) => assignment.status === "assigned");
   if (assignments.isLoading) return <Screen><View style={styles.empty}><Text style={styles.currentText}>Carregando seu plano…</Text></View></Screen>;
