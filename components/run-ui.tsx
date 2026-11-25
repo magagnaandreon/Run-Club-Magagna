@@ -11,20 +11,21 @@ import {
   type ViewStyle,
 } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 
 import { useIsDesktop } from "@/hooks/use-layout";
 
-/** "Corrida de rua": asfalto, pista e cone. Laranja é só a voz do treinador. */
+/** "Corrida de rua": asfalto, pista e conhaque. Conhaque é a cor das ações e da voz do treinador; limão é progresso. */
 export const C = {
   asphalt: "#2B2E30",
   asphaltSoft: "#3A3E41",
   road: "#F4F4EF",
   concrete: "#ECECE7",
-  cone: "#FF6A2B",
-  coneInk: "#B9430F",
-  coneTint: "#FFE4D7",
+  cone: "#8A3B1E",
+  coneInk: "#5E2410",
+  coneTint: "#F1DBD2",
+  conePressed: "#7A3219",
   onAsphaltMuted: "#B9BCB6",
   ink: "#1E2123",
   inkSoft: "#3C4043",
@@ -36,7 +37,7 @@ export const C = {
   muted: "#5D6264",
   lime: "#D7F752",
   limeDeep: "#A8C92B",
-  coral: "#FF6A2B",
+  coral: "#8A3B1E",
   sky: "#E2E3DD",
   skyDeep: "#C4C6BF",
   sand: "#E2E3DD",
@@ -117,6 +118,23 @@ export function Settle({ index = 0, children, style }: { index?: number; childre
   return <Animated.View style={[animated, style]}>{children}</Animated.View>;
 }
 
+/** A conhaque dot that breathes: something new is waiting (a run to review). Still when motion is reduced. */
+export function PulseDot({ size = 10, color = C.cone }: { size?: number; color?: string }) {
+  const reduced = useReducedMotion();
+  const wave = useSharedValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    wave.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.out(Easing.quad) }), -1, false);
+  }, [reduced, wave]);
+  const ring = useAnimatedStyle(() => ({ opacity: 0.45 * (1 - wave.value), transform: [{ scale: 1 + wave.value * 1.8 }] }));
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      {reduced ? null : <Animated.View style={[{ position: "absolute", width: size, height: size, borderRadius: size / 2, backgroundColor: color }, ring]} />}
+      <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }} />
+    </View>
+  );
+}
+
 /** What goes on a step's km plate: the distance, else the minutes. */
 export function stepPlate(step: { distanceMeters: number | null; durationSeconds: number | null }) {
   if (step.distanceMeters) return step.distanceMeters < 1000 ? `${step.distanceMeters}m` : (step.distanceMeters / 1000).toFixed(step.distanceMeters % 1000 ? 1 : 0).replace(".", ",");
@@ -150,7 +168,7 @@ export function RoadStep({ plate, title, detail, pace, paceUnit = "min/km", stat
   );
 }
 
-/** The coach's own words: the only thing painted cone orange. */
+/** The coach's own words, on the light conhaque tint. */
 export function CoachMessage({ children, label = "Recado do treinador" }: { children: ReactNode; label?: string }) {
   return (
     <View style={styles.coachMsg}>
@@ -185,7 +203,7 @@ export function PrimaryButton({ label, icon, onPress, dark = false, style }: { l
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.primaryButton, dark ? styles.primaryButtonDark : styles.primaryButtonLime, style, pressed && styles.pressed]}>
       <Text style={[styles.primaryButtonText, dark && styles.primaryButtonTextDark]}>{label}</Text>
-      {icon ? <Ionicons name={icon} size={19} color={dark ? C.lime : C.ink} /> : null}
+      {icon ? <Ionicons name={icon} size={19} color={dark ? C.lime : "#FFFFFF"} /> : null}
     </Pressable>
   );
 }
@@ -290,10 +308,10 @@ const styles = StyleSheet.create({
   pace: { color: C.ink, fontFamily: F.displayBold, fontSize: 26, lineHeight: 28, ...NUM },
   paceUnit: { color: C.muted, fontFamily: F.textSemi, fontSize: 11 },
 
-  coachMsg: { borderRadius: 10, borderWidth: 1.5, borderColor: C.cone, backgroundColor: C.coneTint, paddingHorizontal: 14, paddingVertical: 12, gap: 4 },
+  coachMsg: { borderRadius: 12, backgroundColor: C.coneTint, paddingHorizontal: 14, paddingVertical: 12, gap: 4 },
   coachMsgHead: { flexDirection: "row", alignItems: "center", gap: 6 },
   coachMsgLabel: { color: C.coneInk, fontFamily: F.textBold, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" },
-  coachMsgText: { color: C.ink, fontFamily: F.text, fontSize: 15, lineHeight: 21 },
+  coachMsgText: { color: C.coneInk, fontFamily: F.text, fontSize: 15, lineHeight: 21 },
 
   mark: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   markArc: { position: "absolute", left: 7, top: 9 },
@@ -305,9 +323,9 @@ const styles = StyleSheet.create({
   iconCircle: { alignItems: "center", justifyContent: "center", backgroundColor: C.road, borderWidth: 1, borderColor: C.line },
   iconCircleDark: { backgroundColor: C.asphaltSoft, borderColor: C.asphaltSoft },
   primaryButton: { minHeight: 56, paddingHorizontal: 20, borderRadius: 12, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 10 },
-  primaryButtonLime: { backgroundColor: C.lime },
+  primaryButtonLime: { backgroundColor: C.cone },
   primaryButtonDark: { backgroundColor: C.asphalt },
-  primaryButtonText: { color: C.ink, fontFamily: F.display, fontSize: 21, letterSpacing: 0.6, textTransform: "uppercase" },
+  primaryButtonText: { color: "#FFFFFF", fontFamily: F.displayBold, fontSize: 20, letterSpacing: 1.6, textTransform: "uppercase" },
   primaryButtonTextDark: { color: C.lime },
   secondaryButton: { minHeight: 52, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1.5, borderColor: C.asphalt, backgroundColor: "transparent", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
   secondaryButtonText: { color: C.ink, fontFamily: F.displayBold, fontSize: 18, letterSpacing: 0.4, textTransform: "uppercase" },

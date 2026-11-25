@@ -4,7 +4,8 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { DateChips, EmptyState, KindBadge, Segmented, SourceBadge, STRAVA_ORANGE, formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { AppHeader, C, CoachMessage, CoachNote, Pill, Road, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
+import { AppHeader, C, CoachMessage, CoachNote, Pill, PulseDot, Road, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
+import { RunFinish } from "@/components/run-finish";
 import { CoachAthletes } from "@/components/coach-athletes";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReviewForm } from "@/components/review-form";
@@ -85,7 +86,7 @@ function CoachClub() {
               <ProfileAvatar name={item.name} size={42} />
               <View style={styles.flexCopy}><Text style={styles.cardTitle}>{item.name}</Text><Text style={styles.cardDetail}>{item.email}</Text></View>
               <Pressable accessibilityLabel={`Rejeitar ${item.name}`} onPress={() => reject.mutate({ athleteId: item.userId })} style={({ pressed }) => [styles.rejectButton, pressed && styles.pressed]}><Ionicons name="close" size={19} color={C.ink} /></Pressable>
-              <Pressable accessibilityLabel={`Aprovar ${item.name}`} onPress={() => approve.mutate({ athleteId: item.userId })} style={({ pressed }) => [styles.approveButton, pressed && styles.pressed]}><Ionicons name="checkmark" size={19} color={C.ink} /><Text style={styles.approveText}>Aprovar</Text></Pressable>
+              <Pressable accessibilityLabel={`Aprovar ${item.name}`} onPress={() => approve.mutate({ athleteId: item.userId })} style={({ pressed }) => [styles.approveButton, pressed && styles.pressed]}><Ionicons name="checkmark" size={19} color="#FFFFFF" /><Text style={styles.approveText}>Aprovar</Text></Pressable>
             </View>
           ))}
           <View style={styles.gap} />
@@ -99,7 +100,7 @@ function CoachClub() {
           <View key={activity.id} style={[styles.activityCard, !review && styles.activityOpen]}>
             <View style={styles.activityTop}>
               <Pressable onPress={() => openAthlete(activity.athleteId)} accessibilityLabel={`Abrir ficha de ${athleteName || "aluno"}`} style={styles.athleteIdentity}><ProfileAvatar uri={athleteAvatarUrl} name={athleteName} size={34} /><View><Text style={styles.cardTitle}>{athleteName || "Aluno"}</Text><Text style={styles.cardDetail}>{new Date(activity.completedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}</Text></View></Pressable>
-              <Pill label={review ? "AVALIADO" : "AGUARDA"} tone={review ? "lime" : "coral"} />
+              {review ? <Pill label="AVALIADO" tone="lime" /> : <View style={styles.waiting}><PulseDot /><Pill label="AGUARDA" tone="coral" /></View>}
             </View>
             <Text style={styles.activityTitle}>{activity.title}</Text>
             <View style={styles.metricChips}>
@@ -221,8 +222,8 @@ function AthleteClub() {
           ))}
         </Road>
       </View> : null}
+      {completed && assignment.run ? <RunFinish distanceMeters={assignment.run.distanceMeters} durationSeconds={assignment.run.durationSeconds} plannedMeters={assignment.steps.reduce((total, step) => total + (step.distanceMeters ?? 0), 0) || undefined} source={assignment.run.source} /> : null}
       {assignment.run?.source === "strava" ? <View style={styles.linkedRun}>
-        <Text style={styles.linkedText}>Feito com a corrida do Strava: {formatKm(assignment.run.distanceMeters, 2)} km em {Math.round(assignment.run.durationSeconds / 60)} min.</Text>
         <Pressable accessibilityRole="button" disabled={unlinkRun.isPending} onPress={() => unlink(assignment.id)} style={({ pressed }) => pressed && styles.pressed}><Text style={styles.linkAction}>Não foi este treino</Text></Pressable>
       </View> : null}
       {!completed ? openLog === assignment.id ? <View style={styles.logBox}>
@@ -323,15 +324,15 @@ const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.paper },
   gap: { height: 27 },
   badges: { flexDirection: "row", alignItems: "center", gap: 6 },
-  linkedRun: { gap: 6, padding: 12, borderRadius: 14, backgroundColor: C.paper },
-  linkedText: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "700" },
+  waiting: { flexDirection: "row", alignItems: "center", gap: 8 },
+  linkedRun: { alignItems: "flex-end", paddingTop: 8 },
   linkAction: { color: C.ink, fontSize: 12, fontWeight: "900", textDecorationLine: "underline" },
   runChoice: { flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: 12, backgroundColor: C.white },
   tabGap: { height: 18 },
   list: { gap: 10 },
   helper: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600", marginBottom: 10 },
   formSection: { color: C.ink, fontSize: 15, fontWeight: "900" },
-  approveText: { color: C.ink, fontSize: 12, fontWeight: "900" },
+  approveText: { color: "#FFFFFF", fontSize: 12, fontWeight: "900" },
   athleteRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(30, 33, 35, 0.06)" },
   activityOpen: { borderColor: "#F6C4B5" },
   activityTitle: { color: C.ink, fontSize: 17, lineHeight: 22, fontWeight: "900", letterSpacing: -0.3 },
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
   flexCopy: { flex: 1, gap: 3 },
   cardTitle: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
   cardDetail: { color: C.muted, fontSize: 11, lineHeight: 16, fontWeight: "600" },
-  approveButton: { height: 38, flexDirection: "row", gap: 4, paddingHorizontal: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
+  approveButton: { height: 38, flexDirection: "row", gap: 4, paddingHorizontal: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.cone },
   rejectButton: { width: 38, height: 38, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.stone },
   pressed: { opacity: 0.72 },
   formCard: { padding: 18, borderRadius: 14, backgroundColor: C.white, gap: 9, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
@@ -357,8 +358,8 @@ const styles = StyleSheet.create({
   choiceSelected: { borderColor: C.ink, backgroundColor: C.ink },
   choiceText: { color: C.ink, fontSize: 11, fontWeight: "800" },
   choiceTextSelected: { color: C.white },
-  primaryButton: { minHeight: 49, borderRadius: 15, backgroundColor: C.lime, alignItems: "center", justifyContent: "center", marginTop: 8, paddingHorizontal: 12 },
-  primaryButtonText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  primaryButton: { minHeight: 49, borderRadius: 15, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", marginTop: 8, paddingHorizontal: 12 },
+  primaryButtonText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
   disabled: { opacity: 0.6 },
   activityCard: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 10, gap: 10 },
   activityTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },

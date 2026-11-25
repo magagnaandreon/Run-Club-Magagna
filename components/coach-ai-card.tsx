@@ -71,7 +71,7 @@ export function CoachAiCard({ athleteId, athleteName, date, onApply }: {
       />
       <View style={styles.actions}>
         <Pressable disabled={busy} onPress={draftWorkout} style={({ pressed }) => [styles.primary, busy && styles.disabled, pressed && styles.pressed]}>
-          {suggestWorkout.isPending ? <ActivityIndicator color={C.ink} /> : <Ionicons name="flash" size={16} color={C.ink} />}
+          {suggestWorkout.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name="flash" size={16} color="#FFFFFF" />}
           <Text style={styles.primaryText}>Treino de {formatDay(date)}</Text>
         </Pressable>
         <Pressable disabled={busy} onPress={draftWeek} style={({ pressed }) => [styles.secondary, busy && styles.disabled, pressed && styles.pressed]}>
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   message: { color: C.lime, fontSize: 12, lineHeight: 18, fontWeight: "800" },
   input: { minHeight: 44, borderRadius: 13, paddingHorizontal: 13, color: C.white, backgroundColor: "rgba(255,255,255,0.08)", fontSize: 13, fontWeight: "600" },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  primary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.lime },
-  primaryText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  primary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.cone },
+  primaryText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
   secondary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: "rgba(215,247,82,0.5)" },
   secondaryText: { color: C.lime, fontSize: 13, fontWeight: "900" },
   week: { gap: 8, marginTop: 4 },

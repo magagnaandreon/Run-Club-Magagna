@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   ai: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, paddingHorizontal: 12, height: 32, borderRadius: 999, backgroundColor: C.lime },
   aiText: { color: C.ink, fontSize: 12, fontWeight: "900" },
   input: { minHeight: 72, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, color: C.ink, backgroundColor: C.white, fontSize: 14, fontWeight: "600", textAlignVertical: "top" },
-  send: { minHeight: 49, borderRadius: 15, backgroundColor: C.lime, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
-  sendText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  send: { minHeight: 49, borderRadius: 15, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  sendText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
 });

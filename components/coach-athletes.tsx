@@ -9,7 +9,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReviewForm } from "@/components/review-form";
 import { RunAnalysisPanel } from "@/components/run-analysis";
 import { RunMapExplorer } from "@/components/run-map";
-import { BackButton, C, CoachNote, SectionTitle, F } from "@/components/run-ui";
+import { BackButton, C, CoachNote, PulseDot, SectionTitle, F } from "@/components/run-ui";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 import { startOfWeek } from "@/shared/insights";
@@ -132,7 +132,7 @@ export function CoachAthletes({ onOpen, onNotice }: { onOpen: (athleteId: number
               <Tag text={summary.weekPlanned ? `${summary.weekDone} de ${summary.weekPlanned} treinos` : "Sem treino na semana"} />
               <Tag text={`${formatKm(summary.weekDistanceMeters)} km na semana`} />
               {summary.overdue ? <Tag hot text={`${summary.overdue} atrasado${summary.overdue > 1 ? "s" : ""}`} /> : null}
-              {summary.toReview ? <Tag lime text={`${summary.toReview} para avaliar`} /> : null}
+              {summary.toReview ? <View style={styles.waiting}><PulseDot /><Tag lime text={`${summary.toReview} para avaliar`} /></View> : null}
             </View>
             <Text style={styles.muted}>{lastRunText(summary.daysSinceLastRun)}</Text>
           </Pressable>
@@ -227,7 +227,7 @@ export function AthleteSheet({ athleteId, onBack }: { athleteId: number; onBack:
           onPress={toggleFollow}
           style={({ pressed }) => [styles.followButton, athlete.followedByMe && styles.followButtonOff, leaving && styles.followButtonDanger, pressed && styles.pressed]}
         >
-          <Text style={[styles.followButtonText, leaving && styles.followButtonTextDanger]}>
+          <Text style={[styles.followButtonText, athlete.followedByMe && !leaving && styles.followButtonTextOff, leaving && styles.followButtonTextDanger]}>
             {!athlete.followedByMe ? `Acompanhar ${firstName}` : leaving ? "Toque de novo para deixar de acompanhar" : "Deixar de acompanhar"}
           </Text>
         </Pressable>
@@ -243,8 +243,8 @@ export function AthleteSheet({ athleteId, onBack }: { athleteId: number; onBack:
       {athlete.isCoachAccount ? null : athlete.followedByMe ? (
         <View style={styles.actions}>
           <Pressable onPress={() => setSending(!sending)} style={({ pressed }) => [styles.action, styles.actionPrimary, pressed && styles.pressed]}>
-            <Ionicons name="send-outline" size={15} color={C.ink} />
-            <Text style={styles.actionText}>Enviar treino</Text>
+            <Ionicons name="send-outline" size={15} color="#FFFFFF" />
+            <Text style={[styles.actionText, styles.actionTextPrimary]}>Enviar treino</Text>
           </Pressable>
           <Pressable onPress={() => router.push({ pathname: "/(tabs)/plans", params: { novoPara: String(athleteId) } })} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
             <Ionicons name="sparkles-outline" size={15} color={C.ink} />
@@ -476,7 +476,7 @@ function SendPanel({ athleteId, firstName, onDone }: { athleteId: number; firstN
       <DayPicker today={today} initialWeek={startOfWeek(today)} value={date} onPick={setDate} />
       {error ? <Text accessibilityRole="alert" style={styles.danger}>{error}</Text> : null}
       <Pressable disabled={assign.isPending} onPress={send} style={({ pressed }) => [styles.primary, assign.isPending && styles.disabled, pressed && styles.pressed]}>
-        {assign.isPending ? <ActivityIndicator color={C.ink} /> : <Ionicons name="send" size={16} color={C.ink} />}
+        {assign.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name="send" size={16} color="#FFFFFF" />}
         <Text style={styles.primaryText}>Enviar para {formatDay(date)}</Text>
       </Pressable>
     </View>
@@ -524,6 +524,7 @@ const styles = StyleSheet.create({
   follow: { flexDirection: "row", alignItems: "center", gap: 3, height: 32, paddingHorizontal: 10, borderRadius: 999, backgroundColor: C.lime },
   followText: { color: C.ink, fontSize: 11, fontWeight: "900" },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 5 },
+  waiting: { flexDirection: "row", alignItems: "center", gap: 7 },
   tag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: C.paper },
   tagHot: { backgroundColor: "#F9D5CC" },
   tagLime: { backgroundColor: C.lime },
@@ -535,23 +536,25 @@ const styles = StyleSheet.create({
   cardLabel: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1 },
   coachRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   coachName: { flex: 1, color: C.ink, fontSize: 14, fontWeight: "800" },
-  followButton: { minHeight: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", paddingHorizontal: 12, backgroundColor: C.lime, marginTop: 2 },
+  followButton: { minHeight: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", paddingHorizontal: 12, backgroundColor: C.cone, marginTop: 2 },
   followButtonOff: { backgroundColor: C.paper },
   followButtonDanger: { backgroundColor: "#B4361C" },
-  followButtonText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  followButtonText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
   followButtonTextDanger: { color: C.white },
+  followButtonTextOff: { color: C.ink },
 
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 },
   action: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 38, paddingHorizontal: 13, borderRadius: 999, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
-  actionPrimary: { backgroundColor: C.lime, borderColor: C.lime },
+  actionPrimary: { backgroundColor: C.cone, borderColor: C.cone },
   actionDanger: { backgroundColor: "#B4361C", borderColor: "#B4361C" },
   actionText: { color: C.ink, fontSize: 12, fontWeight: "800" },
+  actionTextPrimary: { color: "#FFFFFF" },
   actionTextDanger: { color: C.white },
   panel: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 12 },
   pick: { flexDirection: "row", alignItems: "center", gap: 10, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
   pickOn: { borderColor: C.limeDeep, backgroundColor: "#F5F9E4" },
-  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 48, borderRadius: 15, backgroundColor: C.lime, marginTop: 6, paddingHorizontal: 14 },
-  primaryText: { color: C.ink, fontSize: 14, fontWeight: "900" },
+  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 48, borderRadius: 15, backgroundColor: C.cone, marginTop: 6, paddingHorizontal: 14 },
+  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
 
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
   stat: { flexGrow: 1, flexBasis: "46%", gap: 3, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },

@@ -3,8 +3,9 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { C, F, HeaderStat, HeaderStats, Pill, PrimaryButton, Road, RoadHeader, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
+import { C, F, HeaderStat, PulseDot, HeaderStats, Pill, PrimaryButton, Road, RoadHeader, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
 import { TrainingDashboard } from "@/components/training-dashboard";
+import { WeekLine, type WeekDay } from "@/components/week-line";
 import { useAuth } from "@/hooks/use-auth";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
@@ -46,11 +47,22 @@ function AthleteStats() {
   const week = (assignments.data ?? []).filter((assignment) => assignment.scheduledDate >= weekFrom && assignment.scheduledDate <= addDays(weekFrom, 6));
   const next = assignments.data?.find((assignment) => assignment.status === "assigned");
   if (!assignments.data) return null;
+  const today = localToday();
+  const days: WeekDay[] = Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(weekFrom, index);
+    const planned = week.filter((assignment) => assignment.scheduledDate === date);
+    if (!planned.length) return "free";
+    if (planned.some((assignment) => assignment.status === "completed")) return "done";
+    return date < today ? "missed" : "planned";
+  });
   return (
-    <HeaderStats>
-      <HeaderStat value={`${week.filter((assignment) => assignment.status === "completed").length}/${week.length}`} label="treinos da semana" />
-      <HeaderStat value={next ? formatDay(next.scheduledDate) : "—"} label="próximo treino" />
-    </HeaderStats>
+    <>
+      <HeaderStats>
+        <HeaderStat value={`${week.filter((assignment) => assignment.status === "completed").length} de ${week.length}`} label="treinos da semana" />
+        <HeaderStat value={next ? formatDay(next.scheduledDate) : "—"} label="próximo treino" />
+      </HeaderStats>
+      <WeekLine weekFrom={weekFrom} today={today} days={days} />
+    </>
   );
 }
 
@@ -165,7 +177,7 @@ function CoachToday() {
           <View style={styles.feed}>
             {feed.data.slice(0, 3).map(({ activity, athleteName, review }) => (
               <View key={activity.id} style={styles.feedRow}>
-                <View style={[styles.feedDot, review ? styles.feedDotDone : styles.feedDotOpen]} />
+                {review ? <View style={[styles.feedDot, styles.feedDotDone]} /> : <PulseDot />}
                 <View style={styles.actionCopy}>
                   <Text style={styles.feedTitle} numberOfLines={1}>{athleteName || "Aluno"} · {activity.title}</Text>
                   <Text style={styles.feedText}>{formatKm(activity.distanceMeters, 2)} km · {formatPace(activity.averagePaceSecondsPerKm)} /km · {review ? "avaliado" : "aguarda avaliação"}</Text>
@@ -229,7 +241,6 @@ const styles = StyleSheet.create({
   feedRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   feedDot: { width: 10, height: 10, borderRadius: 5 },
   feedDotDone: { backgroundColor: C.limeDeep },
-  feedDotOpen: { backgroundColor: C.coral },
   feedTitle: { color: C.ink, fontSize: 14, fontWeight: "800" },
   feedText: { color: C.muted, fontSize: 12, fontWeight: "600" },
 });

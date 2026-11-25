@@ -253,7 +253,7 @@ export function RunAnalysisSection() {
       {diagnostic.data ? <DiagnosticResult result={diagnostic.data} /> : <Text style={styles.aiCopy}>A IA lê seus números e aponta forças, cuidados e próximos passos. Enviamos ao Cohere só totais e médias, sem seu nome e sem lugares.</Text>}
       {diagnostic.error ? <Text style={styles.aiError}>{diagnostic.error.message}</Text> : null}
       <Pressable accessibilityRole="button" disabled={diagnostic.isPending} onPress={() => diagnostic.mutate(input)} style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}>
-        {diagnostic.isPending ? <ActivityIndicator color={C.ink} /> : <Text style={styles.aiButtonText}>{diagnostic.data ? "Gerar de novo" : "Gerar diagnóstico"}</Text>}
+        {diagnostic.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.aiButtonText}>{diagnostic.data ? "Gerar de novo" : "Gerar diagnóstico"}</Text>}
       </Pressable>
     </View> : null}
     <RunAnalysisPanel analysis={query.data.analysis} />
@@ -307,8 +307,8 @@ const styles = StyleSheet.create({
   aiTitle: { color: C.white, fontSize: 20, fontFamily: F.display },
   aiCopy: { color: "#DDDED8", fontSize: 13, lineHeight: 19, fontWeight: "600" },
   aiError: { color: "#FFB4A6", fontSize: 12, fontWeight: "700" },
-  aiButton: { minHeight: 46, alignItems: "center", justifyContent: "center", borderRadius: 14, backgroundColor: C.lime, marginTop: 4 },
-  aiButtonText: { color: C.ink, fontSize: 14, fontWeight: "900" },
+  aiButton: { minHeight: 46, alignItems: "center", justifyContent: "center", borderRadius: 14, backgroundColor: C.cone, marginTop: 4 },
+  aiButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
   pressed: { opacity: 0.75 },
   result: { gap: 10 },
   headline: { color: C.white, fontSize: 15, lineHeight: 21, fontWeight: "800" },

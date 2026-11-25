@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { useRouter } from "expo-router";
 
 import { AppHeader, C, Pill, Row, Screen, SectionTitle } from "@/components/run-ui";
+import { Achievements } from "@/components/achievements";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -157,7 +158,7 @@ export default function ProfileScreen() {
       <View style={styles.editActions}>
         <Pressable disabled={saveProfile.isPending} onPress={cancelEdit} style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}><Text style={styles.cancelText}>Cancelar</Text></Pressable>
         <Pressable disabled={saveProfile.isPending} onPress={save} style={({ pressed }) => [styles.saveButton, saveProfile.isPending && styles.disabled, pressed && styles.pressed]}>
-          {saveProfile.isPending ? <ActivityIndicator color={C.ink} /> : <Text style={styles.saveText}>Salvar alterações</Text>}
+          {saveProfile.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>Salvar alterações</Text>}
         </Pressable>
       </View>
     </View> : notice ? <Text accessibilityLiveRegion="polite" style={styles.successNotice}>{notice}</Text> : null}
@@ -168,6 +169,8 @@ export default function ProfileScreen() {
     <View style={styles.momentCard}>{isCoach ? <><View style={styles.momentItem}><Ionicons name="people-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{athletes.data?.length ?? 0}</Text><Text style={styles.momentLabel}>alunos aprovados</Text></View></View><View style={styles.momentLine} /><View style={styles.momentItem}><Ionicons name="hourglass-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{pending.data?.length ?? 0}</Text><Text style={styles.momentLabel}>pedidos pendentes</Text></View></View></> : <><View style={styles.momentItem}><Ionicons name="footsteps-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{weekKm.toFixed(1)} km</Text><Text style={styles.momentLabel}>registrados nesta semana</Text></View></View><View style={styles.momentLine} /><View style={styles.momentItem}><Ionicons name="flame-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{thisWeek.length}</Text><Text style={styles.momentLabel}>atividades registradas</Text></View></View></>}</View>
 
     <View style={styles.gap} />
+    {isCoach ? null : <Achievements />}
+
     <SectionTitle title="Seu acompanhamento" />
     <View style={styles.list}>
       <Row icon={isCoach ? "people-outline" : "calendar-outline"} title={isCoach ? "Gestão de alunos e treinos" : "Agenda e avaliações"} detail={isCoach ? "Acesse a aba Alunos para aprovar, atribuir e avaliar." : "Acesse Meu clube para ver treinos enviados e comentários."} />
@@ -201,8 +204,8 @@ const styles = StyleSheet.create({
   editActions: { flexDirection: "row", gap: 10, marginTop: 18 },
   cancelButton: { flex: 1, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
   cancelText: { color: C.ink, fontSize: 13, fontWeight: "800" },
-  saveButton: { flex: 1.3, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: C.lime },
-  saveText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  saveButton: { flex: 1.3, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: C.cone },
+  saveText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
   disabled: { opacity: 0.55 },
   gap: { height: 30 },
   momentCard: { flexDirection: "row", alignItems: "center", padding: 17, borderRadius: 14, backgroundColor: C.sand },

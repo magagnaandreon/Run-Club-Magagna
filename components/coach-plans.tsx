@@ -118,7 +118,7 @@ export function CoachPlans() {
         ) : null}
         {notice ? <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text> : null}
         <Pressable disabled={saving} onPress={save} style={({ pressed }) => [styles.primary, saving && styles.disabled, pressed && styles.pressed]}>
-          {saving ? <ActivityIndicator color={C.ink} /> : <Ionicons name="checkmark" size={18} color={C.ink} />}
+          {saving ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
           <Text style={styles.primaryText}>{editing.mode === "edit" ? "Salvar alterações" : chosen ? `Salvar e enviar para ${formatDay(targetDate)}` : "Salvar na biblioteca"}</Text>
         </Pressable>
       </Screen>
@@ -134,7 +134,7 @@ export function CoachPlans() {
         title="Planos"
         right={
           <Pressable onPress={() => openEditor({ mode: "new" }, emptyWorkoutDraft())} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-            <Ionicons name="add" size={18} color={C.ink} />
+            <Ionicons name="add" size={18} color={"#FFFFFF"} />
             <Text style={styles.newText}>Novo treino</Text>
           </Pressable>
         }
@@ -394,7 +394,7 @@ function Library({ today, sendDate, athletes, workouts, loading, onEdit, onNotic
                 <Text style={styles.label}>Quando</Text>
                 <DayPicker today={today} initialWeek={startOfWeek(date)} value={date} onPick={setDate} />
                 <Pressable disabled={assign.isPending || !athletes.length} onPress={() => send(workout.id)} style={({ pressed }) => [styles.primary, (assign.isPending || !athletes.length) && styles.disabled, pressed && styles.pressed]}>
-                  {assign.isPending ? <ActivityIndicator color={C.ink} /> : <Ionicons name="send" size={16} color={C.ink} />}
+                  {assign.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name="send" size={16} color="#FFFFFF" />}
                   <Text style={styles.primaryText}>Enviar para {formatDay(date)}</Text>
                 </Pressable>
               </View>
@@ -455,8 +455,8 @@ function Meta({ text, hot = false }: { text: string; hot?: boolean }) {
 function Action({ icon, label, onPress, primary = false, danger = false }: { icon: "send-outline" | "create-outline" | "copy-outline" | "trash-outline" | "calendar-outline"; label: string; onPress: () => void; primary?: boolean; danger?: boolean }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.action, primary && styles.actionPrimary, danger && styles.actionDanger, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={15} color={danger ? C.white : C.ink} />
-      <Text style={[styles.actionText, danger && styles.actionTextDanger]}>{label}</Text>
+      <Ionicons name={icon} size={15} color={danger ? C.white : primary ? "#FFFFFF" : C.ink} />
+      <Text style={[styles.actionText, primary && styles.actionTextPrimary, danger && styles.actionTextDanger]}>{label}</Text>
     </Pressable>
   );
 }
@@ -472,16 +472,16 @@ const styles = StyleSheet.create({
   notice: { color: C.ink, backgroundColor: C.lime, padding: 12, borderRadius: 14, fontSize: 13, fontWeight: "800", marginBottom: 12, overflow: "hidden" },
   label: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 4 },
 
-  newButton: { flexDirection: "row", alignItems: "center", gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 8, backgroundColor: C.lime },
-  newText: { color: C.ink, fontFamily: F.displayBold, fontSize: 16, textTransform: "uppercase", letterSpacing: 0.4 },
+  newButton: { flexDirection: "row", alignItems: "center", gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 8, backgroundColor: C.cone },
+  newText: { color: "#FFFFFF", fontFamily: F.displayBold, fontSize: 16, textTransform: "uppercase", letterSpacing: 0.4 },
   back: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingVertical: 8, marginBottom: 6 },
   backText: { color: C.ink, fontSize: 13, fontWeight: "800" },
   target: { gap: 8, marginTop: 12 },
   card: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   warning: { flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 14, backgroundColor: C.sand, marginBottom: 12 },
   warningText: { flex: 1, color: C.ink, fontSize: 12, fontWeight: "700", lineHeight: 17 },
-  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 50, borderRadius: 15, backgroundColor: C.lime, marginTop: 12, paddingHorizontal: 14 },
-  primaryText: { color: C.ink, fontSize: 14, fontWeight: "900" },
+  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 50, borderRadius: 15, backgroundColor: C.cone, marginTop: 12, paddingHorizontal: 14 },
+  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
 
   weekNav: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   navButton: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
@@ -514,10 +514,11 @@ const styles = StyleSheet.create({
 
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   action: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 34, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
-  actionPrimary: { backgroundColor: C.lime, borderColor: C.lime },
+  actionPrimary: { backgroundColor: C.cone, borderColor: C.cone },
   actionDanger: { backgroundColor: "#B4361C", borderColor: "#B4361C" },
   actionText: { color: C.ink, fontSize: 12, fontWeight: "800" },
   actionTextDanger: { color: C.white },
+  actionTextPrimary: { color: "#FFFFFF" },
   dangerText: { color: "#8A2A12", fontSize: 12, lineHeight: 17, fontWeight: "700" },
 
   picker: { flexDirection: "row", alignItems: "center", gap: 4 },

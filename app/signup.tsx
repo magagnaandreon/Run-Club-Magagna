@@ -58,7 +58,7 @@ export default function SignupScreen() {
           ) : null}
           {notice ? <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text> : null}
           <Pressable disabled={register.isPending || name.trim().length < 2 || !email || password.length < 10 || (isCoach && !coachCode)} onPress={submit} style={({ pressed }) => [styles.primary, (register.isPending || name.trim().length < 2 || !email || password.length < 10 || (isCoach && !coachCode)) && styles.disabled, pressed && styles.pressed]}>
-            {register.isPending ? <ActivityIndicator color={C.ink} /> : <Text style={styles.primaryText}>{isCoach ? "Criar conta do treinador" : "Pedir acesso"}</Text>}
+            {register.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryText}>{isCoach ? "Criar conta do treinador" : "Pedir acesso"}</Text>}
           </Pressable>
         </View>
         <Text style={styles.privacy}>Sua senha é protegida no armazenamento da conta. Você só verá treinos do clube depois da aprovação.</Text>
@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
   label: { color: C.ink, fontSize: 12, fontWeight: "800", marginBottom: 7 },
   spaced: { marginTop: 15 },
   input: { minHeight: 51, borderRadius: 15, borderWidth: 1, borderColor: C.line, backgroundColor: C.white, paddingHorizontal: 15, color: C.ink, fontSize: 15 },
-  primary: { minHeight: 54, borderRadius: 17, backgroundColor: C.lime, alignItems: "center", justifyContent: "center", marginTop: 21 },
-  primaryText: { color: C.ink, fontSize: 15, fontWeight: "900" },
+  primary: { minHeight: 54, borderRadius: 17, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", marginTop: 21 },
+  primaryText: { color: "#FFFFFF", fontSize: 15, fontWeight: "900" },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.76 },
   notice: { color: "#A74736", fontSize: 13, lineHeight: 18, fontWeight: "700", marginTop: 12 },
