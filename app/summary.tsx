@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
-import { AppMark, C, CoachNote, Pill, PrimaryButton, Screen, SectionTitle } from "@/components/run-ui";
+import { AppMark, C, CoachNote, Pill, PrimaryButton, Screen, SectionTitle, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 
 export default function SummaryScreen() {
@@ -39,22 +39,22 @@ const styles = StyleSheet.create({
   top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4 },
   hero: { marginTop: 32 },
   eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 8 },
-  title: { color: C.ink, fontSize: 31, lineHeight: 35, fontWeight: "900", letterSpacing: -1.1 },
+  title: { color: C.ink, fontSize: 31, lineHeight: 35, fontFamily: F.display, letterSpacing: 0 },
   subtitle: { color: C.inkSoft, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 9, maxWidth: 320 },
   results: { flexDirection: "row", gap: 8, marginTop: 27 },
-  result: { flex: 1, minHeight: 116, alignItems: "flex-start", justifyContent: "center", padding: 13, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  result: { flex: 1, minHeight: 116, alignItems: "flex-start", justifyContent: "center", padding: 13, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   resultValue: { color: C.ink, fontSize: 19, fontWeight: "900", letterSpacing: -0.6, marginTop: 12 },
   resultLabel: { color: C.muted, fontSize: 10, fontWeight: "700", marginTop: 3 },
-  badge: { flexDirection: "row", alignItems: "center", gap: 12, padding: 15, borderRadius: 20, backgroundColor: C.sand, marginTop: 13 },
+  badge: { flexDirection: "row", alignItems: "center", gap: 12, padding: 15, borderRadius: 14, backgroundColor: C.sand, marginTop: 13 },
   badgeIcon: { width: 38, height: 38, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
   badgeTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
   badgeText: { color: C.inkSoft, fontSize: 12, fontWeight: "600", marginTop: 3 },
   gap: { height: 30 },
   feelings: { flexDirection: "row", gap: 9 },
-  feeling: { flex: 1, alignItems: "center", gap: 7, paddingVertical: 13, borderRadius: 19, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  feeling: { flex: 1, alignItems: "center", gap: 7, paddingVertical: 13, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   feelingSelected: { backgroundColor: C.lime, borderColor: C.lime },
   feelingLabel: { color: C.ink, fontSize: 10, fontWeight: "800", textAlign: "center" },
-  next: { padding: 18, borderRadius: 23, backgroundColor: C.sky },
+  next: { padding: 18, borderRadius: 14, backgroundColor: C.sky },
   nextEyebrow: { color: C.ink, fontSize: 10, fontWeight: "900", letterSpacing: 1.25, marginBottom: 8 },
   nextTitle: { color: C.ink, fontSize: 19, fontWeight: "900" },
   nextText: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600", marginTop: 5 },

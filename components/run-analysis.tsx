@@ -5,7 +5,7 @@ import Svg, { Circle, Line, Path } from "react-native-svg";
 
 import { BarChart, Explain, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
 import { tapProps } from "@/components/run-map";
-import { C, SectionTitle } from "@/components/run-ui";
+import { C, SectionTitle, F } from "@/components/run-ui";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 import { MIN_ANALYSIS_RUNS, type Correlation, type CorrelationKey, type LoadStatus, type RunAnalysis, type RunDiagnostic } from "@/shared/run-analysis";
@@ -263,7 +263,7 @@ export function RunAnalysisSection() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   intro: { color: C.inkSoft, fontSize: 12, fontWeight: "600", marginBottom: 12 },
-  card: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
+  card: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
   cardTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
   chartTitle: { color: C.ink, fontSize: 14, fontWeight: "900", marginTop: 8, marginBottom: 8 },
   copy: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   races: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   race: { flexGrow: 1, flexBasis: "46%", minWidth: 130, gap: 4 },
   raceNote: { color: C.inkSoft, fontSize: 11, lineHeight: 15, fontWeight: "700" },
-  tile: { flexGrow: 1, flexBasis: "30%", minWidth: 96, padding: 12, borderRadius: 16, backgroundColor: C.stone },
+  tile: { flexGrow: 1, flexBasis: "30%", minWidth: 96, padding: 12, borderRadius: 12, backgroundColor: C.stone },
   tileValue: { color: C.ink, fontSize: 17, fontWeight: "900" },
   tileLabel: { color: C.inkSoft, fontSize: 11, fontWeight: "700", marginTop: 2 },
   tileNote: { color: C.muted, fontSize: 11, fontWeight: "700", marginTop: 1 },
@@ -302,10 +302,10 @@ const styles = StyleSheet.create({
   axisText: { color: C.muted, fontSize: 10, fontWeight: "700" },
   axisStrong: { color: C.ink, fontSize: 11, fontWeight: "800" },
   readout: { color: C.inkSoft, fontSize: 12, fontWeight: "700", marginTop: 6 },
-  aiCard: { gap: 8, padding: 16, borderRadius: 22, backgroundColor: C.ink, marginBottom: 16 },
+  aiCard: { gap: 8, padding: 16, borderRadius: 14, backgroundColor: C.ink, marginBottom: 16 },
   aiEyebrow: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.5 },
-  aiTitle: { color: C.white, fontSize: 20, fontWeight: "900" },
-  aiCopy: { color: "#D6DCDF", fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  aiTitle: { color: C.white, fontSize: 20, fontFamily: F.display },
+  aiCopy: { color: "#DDDED8", fontSize: 13, lineHeight: 19, fontWeight: "600" },
   aiError: { color: "#FFB4A6", fontSize: 12, fontWeight: "700" },
   aiButton: { minHeight: 46, alignItems: "center", justifyContent: "center", borderRadius: 14, backgroundColor: C.lime, marginTop: 4 },
   aiButtonText: { color: C.ink, fontSize: 14, fontWeight: "900" },
@@ -314,6 +314,6 @@ const styles = StyleSheet.create({
   headline: { color: C.white, fontSize: 15, lineHeight: 21, fontWeight: "800" },
   part: { gap: 3 },
   partTitle: { color: C.lime, fontSize: 12, fontWeight: "900" },
-  partItem: { color: "#E6EAEC", fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  aiNote: { color: "#A9B4BA", fontSize: 11, fontWeight: "600" },
+  partItem: { color: "#E8E9E3", fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  aiNote: { color: C.onAsphaltMuted, fontSize: 11, fontWeight: "600" },
 });

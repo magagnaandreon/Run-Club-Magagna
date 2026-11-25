@@ -5,7 +5,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Path } from "react-native-svg";
 
-import { C, PrimaryButton, Screen, SectionTitle } from "@/components/run-ui";
+import { AppHeader, C, PrimaryButton, Screen, SectionTitle, F } from "@/components/run-ui";
 import { getApiBaseUrl } from "@/constants/oauth";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -173,11 +173,7 @@ export function RunMapScreen() {
   const shared = Boolean(runMap.data?.sharedWithCoach);
 
   return <Screen scroll wide>
-    <View style={styles.header}>
-      <Text style={styles.eyebrow}>SEU BRASIL CORRIDO</Text>
-      <Text style={styles.title}>Mapa</Text>
-      <Text style={styles.subtitle}>Cada município ganha cor quando sua corrida do Strava passa por ele.</Text>
-    </View>
+    <AppHeader eyebrow="Seu Brasil corrido" title="Mapa" subtitle="Cada município ganha cor quando sua corrida do Strava passa por ele." />
 
     <RunMapExplorer places={runMap.data?.places ?? []} ranking="Onde você mais correu">
       <View style={styles.action}>
@@ -222,35 +218,31 @@ function ActionButton({ label, disabled, loading, onPress }: { label: string; di
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 4, marginBottom: 16 },
-  eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 5 },
-  title: { color: C.ink, fontSize: 31, fontWeight: "900", letterSpacing: -1.1 },
-  subtitle: { color: C.inkSoft, fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 5 },
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
-  stat: { flexGrow: 1, flexBasis: "45%", padding: 12, borderRadius: 16, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  stat: { flexGrow: 1, flexBasis: "45%", padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   statValue: { color: C.ink, fontSize: 18, fontWeight: "900" },
   statLabel: { color: C.muted, fontSize: 11, fontWeight: "700", marginTop: 2 },
-  mapCard: { padding: 14, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  mapCard: { padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   mapTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
   mapTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
   hint: { color: C.muted, fontSize: 11, fontWeight: "700" },
   backChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: C.stone },
   backText: { color: C.ink, fontSize: 11, fontWeight: "800" },
   canvas: { width: "100%", maxWidth: 620, aspectRatio: 1, alignSelf: "center" },
-  placeCard: { position: "absolute", left: 0, right: 0, maxWidth: 340, alignSelf: "center", padding: 12, borderRadius: 16, backgroundColor: C.ink, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  placeCard: { position: "absolute", left: 0, right: 0, maxWidth: 340, alignSelf: "center", padding: 12, borderRadius: 12, backgroundColor: C.ink, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
   placeTop: { top: 0 },
   placeBottom: { bottom: 0 },
   placeHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   placeTitle: { color: C.white, fontSize: 15, fontWeight: "900" },
-  placeSub: { color: "#A9B4BA", fontSize: 11, fontWeight: "600", marginTop: 1 },
+  placeSub: { color: C.onAsphaltMuted, fontSize: 11, fontWeight: "600", marginTop: 1 },
   placeClose: { width: 26, height: 26, alignItems: "center", justifyContent: "center", borderRadius: 13, backgroundColor: C.lime },
   placeRun: { flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 8 },
-  placeRunValue: { color: C.lime, fontSize: 22, fontWeight: "900" },
-  placeRunLabel: { color: "#D6DCDF", fontSize: 12, fontWeight: "700" },
+  placeRunValue: { color: C.lime, fontSize: 22, fontFamily: F.display },
+  placeRunLabel: { color: "#DDDED8", fontSize: 12, fontWeight: "700" },
   placeFacts: { flexDirection: "row", gap: 8, marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#34424B" },
   placeFact: { flex: 1 },
   placeFactValue: { color: C.white, fontSize: 12, fontWeight: "800" },
-  placeFactLabel: { color: "#A9B4BA", fontSize: 10, fontWeight: "600", marginTop: 1 },
+  placeFactLabel: { color: C.onAsphaltMuted, fontSize: 10, fontWeight: "600", marginTop: 1 },
   loading: { minHeight: 300, alignItems: "center", justifyContent: "center" },
   legend: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 8 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
@@ -261,7 +253,7 @@ const styles = StyleSheet.create({
   stateChipOn: { backgroundColor: C.ink },
   stateText: { color: C.ink, fontSize: 12, fontWeight: "800" },
   stateTextOn: { color: C.lime },
-  action: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginBottom: 18 },
+  action: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginBottom: 18 },
   actionTitle: { color: C.ink, fontSize: 15, fontWeight: "900" },
   copy: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   consent: { flexDirection: "row", alignItems: "center", gap: 10 },

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { AppMark, C, Screen } from "@/components/run-ui";
+import { AppMark, C, Screen, F } from "@/components/run-ui";
 import { oauthErrorMessage, startGoogleLogin } from "@/constants/oauth";
 import { completeSignIn } from "@/lib/_core/api";
 import { trpc } from "@/lib/trpc";
@@ -104,9 +104,9 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   keyboard: { flexGrow: 1, justifyContent: "center", paddingVertical: 30 },
   brand: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 40 },
-  brandTitle: { color: C.ink, fontSize: 20, fontWeight: "900", letterSpacing: -0.7 },
+  brandTitle: { color: C.ink, fontSize: 20, fontFamily: F.display, letterSpacing: 0 },
   eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 8 },
-  title: { color: C.ink, fontSize: 32, lineHeight: 36, fontWeight: "900", letterSpacing: -1.1 },
+  title: { color: C.ink, fontSize: 32, lineHeight: 36, fontFamily: F.display, letterSpacing: 0 },
   subtitle: { color: C.muted, fontSize: 14, lineHeight: 21, fontWeight: "600", marginTop: 10, maxWidth: 310 },
   form: { marginTop: 28 },
   label: { color: C.ink, fontSize: 12, fontWeight: "800", marginBottom: 7 },

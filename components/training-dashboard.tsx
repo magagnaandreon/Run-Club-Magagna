@@ -17,7 +17,7 @@ import {
   formatKm,
   formatPace,
 } from "@/components/dashboard-ui";
-import { C, SectionTitle } from "@/components/run-ui";
+import { C, SectionTitle, F } from "@/components/run-ui";
 import { localToday, useInsights } from "@/hooks/use-insights";
 import { useIsDesktop } from "@/hooks/use-layout";
 import { paceSecondsPerKm } from "@/shared/insights";
@@ -83,7 +83,7 @@ export function TrainingDashboard({ enabled = true, showRecent = true, aside, ti
           { icon: "map-outline", label: "distância", value: formatKm(period.distanceMeters), unit: "km", delta: delta(period.distanceMeters, period.previousDistanceMeters) },
           { icon: "speedometer-outline", label: "ritmo médio", value: formatPace(period.averagePaceSecondsPerKm), unit: "/km", accent: C.sky },
           { icon: "time-outline", label: "tempo em movimento", value: formatDuration(period.movingSeconds), accent: C.sand },
-          { icon: "trophy-outline", label: "maior corrida", value: formatKm(period.longestMeters), unit: "km", accent: "#FBD9CF" },
+          { icon: "trophy-outline", label: "maior corrida", value: formatKm(period.longestMeters), unit: "km", accent: "#EEF8C6" },
           { icon: "flash-outline", label: "melhor ritmo (1 km+)", value: formatPace(period.bestPaceSecondsPerKm), unit: "/km", accent: C.sky },
           { icon: "trending-up-outline", label: "elevação", value: String(period.elevationMeters), unit: "m", accent: C.sand },
           { icon: "calendar-outline", label: "dias ativos", value: String(period.activeDays), accent: C.lime },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   main: { flex: 1.35, minWidth: 0 },
   side: { flex: 1, minWidth: 0 },
 
-  stravaBanner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, marginBottom: 16, borderRadius: 18, backgroundColor: "#FFF1EA", borderWidth: 1, borderColor: "#FFD6C2" },
+  stravaBanner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, marginBottom: 16, borderRadius: 12, backgroundColor: "#FFF1EA", borderWidth: 1, borderColor: "#FFD6C2" },
   stravaDot: { width: 34, height: 34, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: STRAVA_ORANGE },
   bannerCopy: { flex: 1, gap: 2 },
   bannerTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
@@ -235,19 +235,19 @@ const styles = StyleSheet.create({
   warning: { color: "#8A2A12", fontSize: 12, fontWeight: "700", marginBottom: 12 },
 
   periodCaption: { color: C.muted, fontSize: 12, fontWeight: "700", marginTop: 10, marginBottom: 12 },
-  periodChart: { padding: 16, marginBottom: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  periodChart: { padding: 16, marginBottom: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   periodChartTitle: { color: C.ink, fontSize: 13, fontWeight: "900", marginBottom: 6 },
 
-  weekCard: { overflow: "hidden", padding: 18, borderRadius: 24, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(11, 23, 32, 0.22)" },
-  weekGlow: { position: "absolute", width: 240, height: 240, borderRadius: 120, right: -90, top: -110, backgroundColor: "#1C3B47" },
+  weekCard: { overflow: "hidden", padding: 18, borderRadius: 14, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(30, 33, 35, 0.22)" },
+  weekGlow: { position: "absolute", width: 240, height: 240, borderRadius: 120, right: -90, top: -110, backgroundColor: C.asphaltSoft },
   weekHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
   weekEyebrow: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.3, marginBottom: 6 },
   weekValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  weekValue: { color: C.white, fontSize: 34, lineHeight: 38, fontWeight: "900", letterSpacing: -1.2 },
+  weekValue: { color: C.white, fontSize: 34, lineHeight: 38, fontFamily: F.display, letterSpacing: 0 },
   weekUnit: { color: "rgba(255,255,255,0.6)", fontSize: 16, fontWeight: "800", marginTop: 12, marginRight: 4 },
   weekCompare: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600", marginTop: 2 },
-  streak: { alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 18, backgroundColor: C.lime },
-  streakValue: { color: C.ink, fontSize: 20, lineHeight: 22, fontWeight: "900", marginTop: 2 },
+  streak: { alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: C.lime },
+  streakValue: { color: C.ink, fontSize: 20, lineHeight: 22, fontFamily: F.display, marginTop: 2 },
   streakLabel: { color: C.ink, fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
   weekMetrics: { flexDirection: "row", alignItems: "center", marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" },
   weekMetric: { flex: 1, alignItems: "center", gap: 3 },

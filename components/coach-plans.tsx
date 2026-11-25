@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { CoachAiCard } from "@/components/coach-ai-card";
 import { EmptyState, Segmented, formatDay } from "@/components/dashboard-ui";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { AppHeader, C, Screen } from "@/components/run-ui";
+import { AppHeader, C, F, Screen } from "@/components/run-ui";
 import { WorkoutEditor, draftFromAi, draftFromWorkout, emptyWorkoutDraft, workoutInputFrom, type WorkoutDraft } from "@/components/workout-editor";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
@@ -89,7 +89,7 @@ export function CoachPlans() {
           <Ionicons name="arrow-back" size={18} color={C.ink} />
           <Text style={styles.backText}>Voltar sem salvar</Text>
         </Pressable>
-        <AppHeader eyebrow="BIBLIOTECA" title={editing.mode === "edit" ? "Editar treino" : "Novo treino"} />
+        <AppHeader eyebrow="Biblioteca" title={editing.mode === "edit" ? "Editar treino" : "Novo treino"} />
         {editing.mode === "new" ? <CoachAiCard athleteId={target} athleteName={chosen ? chosen.name || chosen.email : null} date={targetDate} onApply={(workout, date) => { setDraft(draftFromAi(workout)); setTargetDate(date); }} /> : null}
         {editing.mode === "edit" && editing.pendingCount ? (
           <View style={styles.warning}>
@@ -130,7 +130,7 @@ export function CoachPlans() {
   return (
     <Screen scroll>
       <AppHeader
-        eyebrow="TREINADOR"
+        eyebrow="Treinador"
         title="Planos"
         right={
           <Pressable onPress={() => openEditor({ mode: "new" }, emptyWorkoutDraft())} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
@@ -472,12 +472,12 @@ const styles = StyleSheet.create({
   notice: { color: C.ink, backgroundColor: C.lime, padding: 12, borderRadius: 14, fontSize: 13, fontWeight: "800", marginBottom: 12, overflow: "hidden" },
   label: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 4 },
 
-  newButton: { flexDirection: "row", alignItems: "center", gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 999, backgroundColor: C.lime },
-  newText: { color: C.ink, fontSize: 13, fontWeight: "900" },
+  newButton: { flexDirection: "row", alignItems: "center", gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 8, backgroundColor: C.lime },
+  newText: { color: C.ink, fontFamily: F.displayBold, fontSize: 16, textTransform: "uppercase", letterSpacing: 0.4 },
   back: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingVertical: 8, marginBottom: 6 },
   backText: { color: C.ink, fontSize: 13, fontWeight: "800" },
   target: { gap: 8, marginTop: 12 },
-  card: { padding: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  card: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   warning: { flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 14, backgroundColor: C.sand, marginBottom: 12 },
   warningText: { flex: 1, color: C.ink, fontSize: 12, fontWeight: "700", lineHeight: 17 },
   primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 50, borderRadius: 15, backgroundColor: C.lime, marginTop: 12, paddingHorizontal: 14 },
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   chipTextOn: { color: C.white },
   athleteChip: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 34, paddingLeft: 5, paddingRight: 12, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
 
-  day: { padding: 12, borderRadius: 18, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 8, gap: 8 },
+  day: { padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 8, gap: 8 },
   dayToday: { borderColor: C.ink, borderWidth: 1.5 },
   dayHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   dayName: { color: C.ink, fontSize: 12, fontWeight: "900", letterSpacing: 0.4 },
@@ -529,12 +529,12 @@ const styles = StyleSheet.create({
 
   library: { gap: 10 },
   search: { minHeight: 44, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, color: C.ink, backgroundColor: C.white, fontSize: 13, fontWeight: "600" },
-  workout: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  workout: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   workoutTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
   meta: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 8 },
   metaChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: C.paper },
   metaHot: { backgroundColor: "#F9D5CC" },
   metaText: { color: C.inkSoft, fontSize: 10, fontWeight: "800" },
   steps: { color: C.muted, fontSize: 11, fontWeight: "600", marginTop: 6 },
-  sendPanel: { gap: 8, padding: 12, borderRadius: 16, backgroundColor: C.paper },
+  sendPanel: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.paper },
 });

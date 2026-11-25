@@ -35,7 +35,9 @@ const stravaCache = new Map<string, { at: number; items: StravaActivitySummary[]
 async function cachedStravaActivities(userId: number, afterEpochSeconds: number, maxPages: number) {
   const key = `${userId}:${afterEpochSeconds}`;
   const hit = stravaCache.get(key);
-  if (hit && Date.now() - hit.at < STRAVA_CACHE_MS) return hit;
+  const age = hit ? Date.now() - hit.at : -1;
+  // A clock that moved backwards makes the age negative: refetch instead of trusting it.
+  if (hit && age >= 0 && age < STRAVA_CACHE_MS) return hit;
   const fresh = { at: Date.now(), ...(await listStravaActivitiesSince(userId, afterEpochSeconds, maxPages)) };
   stravaCache.set(key, fresh);
   return fresh;

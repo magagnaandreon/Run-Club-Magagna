@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 
-import { C, Screen } from "@/components/run-ui";
+import { C, Screen, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -77,7 +77,7 @@ export default function StravaCallbackScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 25, gap: 12 },
-  title: { color: C.ink, fontSize: 20, fontWeight: "900", textAlign: "center" },
+  title: { color: C.ink, fontSize: 20, fontFamily: F.display, textAlign: "center" },
   message: { color: C.muted, fontSize: 13, lineHeight: 19, fontWeight: "600", textAlign: "center" },
   link: { color: C.ink, fontSize: 13, fontWeight: "900", padding: 12 },
 });

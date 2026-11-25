@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { AppMark, C, Pill, Row, Screen, SectionTitle } from "@/components/run-ui";
+import { AppHeader, C, Pill, Row, Screen, SectionTitle } from "@/components/run-ui";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -129,7 +129,7 @@ export default function ProfileScreen() {
   };
 
   return <Screen scroll>
-    <View style={styles.header}><View><Text style={styles.eyebrow}>SEU ESPAÇO</Text><Text style={styles.title}>Perfil</Text></View><AppMark size={42} /></View>
+    <AppHeader eyebrow="Seu espaço" title="Perfil" />
 
     <View style={styles.profileCard}>
       <ProfileAvatar uri={avatarUrl} name={displayName} size={68} />
@@ -179,16 +179,13 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 23 },
-  eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 5 },
-  title: { color: C.ink, fontSize: 31, fontWeight: "900", letterSpacing: -1.1 },
-  profileCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 18, borderRadius: 25, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  profileCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   profileCopy: { flex: 1, gap: 5 },
   name: { color: C.ink, fontSize: 19, fontWeight: "900" },
   profileDetail: { color: C.muted, fontSize: 12, fontWeight: "700" },
   editLink: { alignSelf: "flex-start", minHeight: 42, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 8, marginTop: 5 },
   editLinkText: { color: C.ink, fontSize: 13, fontWeight: "900" },
-  editCard: { padding: 18, borderRadius: 23, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginTop: 8 },
+  editCard: { padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginTop: 8 },
   editTitle: { color: C.ink, fontSize: 18, fontWeight: "900", marginBottom: 14 },
   photoPreview: { alignItems: "center", marginBottom: 10 },
   photoButton: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 7, minHeight: 42, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.sky },
@@ -208,12 +205,12 @@ const styles = StyleSheet.create({
   saveText: { color: C.ink, fontSize: 13, fontWeight: "900" },
   disabled: { opacity: 0.55 },
   gap: { height: 30 },
-  momentCard: { flexDirection: "row", alignItems: "center", padding: 17, borderRadius: 21, backgroundColor: C.sand },
+  momentCard: { flexDirection: "row", alignItems: "center", padding: 17, borderRadius: 14, backgroundColor: C.sand },
   momentItem: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   momentLine: { width: 1, height: 38, backgroundColor: "#D9CBB3", marginHorizontal: 10 },
   momentValue: { color: C.ink, fontSize: 16, fontWeight: "900" },
   momentLabel: { color: C.inkSoft, fontSize: 10, fontWeight: "700", marginTop: 2 },
-  list: { paddingHorizontal: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  list: { paddingHorizontal: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   signOut: { minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, borderRadius: 16 },
   signOutText: { color: C.ink, fontSize: 13, fontWeight: "800" },
   pressed: { opacity: 0.72 },

@@ -9,7 +9,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReviewForm } from "@/components/review-form";
 import { RunAnalysisPanel } from "@/components/run-analysis";
 import { RunMapExplorer } from "@/components/run-map";
-import { BackButton, C, CoachNote, SectionTitle } from "@/components/run-ui";
+import { BackButton, C, CoachNote, SectionTitle, F } from "@/components/run-ui";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 import { startOfWeek } from "@/shared/insights";
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: C.ink, borderColor: C.ink },
   chipText: { color: C.ink, fontSize: 12, fontWeight: "800" },
   chipTextOn: { color: C.white },
-  row: { gap: 9, padding: 13, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  row: { gap: 9, padding: 13, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   rowMine: { borderColor: C.limeDeep },
   rowTop: { flexDirection: "row", alignItems: "center", gap: 11 },
   rowName: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
@@ -530,8 +530,8 @@ const styles = StyleSheet.create({
   tagText: { color: C.inkSoft, fontSize: 11, fontWeight: "800" },
 
   identity: { flexDirection: "row", alignItems: "center", gap: 13, marginTop: 8, marginBottom: 14 },
-  sheetName: { color: C.ink, fontSize: 24, lineHeight: 29, fontWeight: "900", letterSpacing: -0.6 },
-  followCard: { gap: 8, padding: 14, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 12 },
+  sheetName: { color: C.ink, fontSize: 24, lineHeight: 29, fontFamily: F.display, letterSpacing: 0 },
+  followCard: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 12 },
   cardLabel: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1 },
   coachRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   coachName: { flex: 1, color: C.ink, fontSize: 14, fontWeight: "800" },
@@ -547,20 +547,20 @@ const styles = StyleSheet.create({
   actionDanger: { backgroundColor: "#B4361C", borderColor: "#B4361C" },
   actionText: { color: C.ink, fontSize: 12, fontWeight: "800" },
   actionTextDanger: { color: C.white },
-  panel: { gap: 8, padding: 12, borderRadius: 16, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 12 },
+  panel: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 12 },
   pick: { flexDirection: "row", alignItems: "center", gap: 10, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
   pickOn: { borderColor: C.limeDeep, backgroundColor: "#F5F9E4" },
   primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 48, borderRadius: 15, backgroundColor: C.lime, marginTop: 6, paddingHorizontal: 14 },
   primaryText: { color: C.ink, fontSize: 14, fontWeight: "900" },
 
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  stat: { flexGrow: 1, flexBasis: "46%", gap: 3, padding: 12, borderRadius: 16, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  stat: { flexGrow: 1, flexBasis: "46%", gap: 3, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   statHot: { backgroundColor: "#FBE7E1", borderColor: "#F6C4B5" },
   statValue: { color: C.ink, fontSize: 18, fontWeight: "900", letterSpacing: -0.4 },
   statLabel: { color: C.muted, fontSize: 11, fontWeight: "700" },
-  chart: { padding: 12, borderRadius: 18, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 8 },
+  chart: { padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 8 },
 
-  send: { gap: 8, padding: 12, borderRadius: 16, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 8 },
+  send: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 8 },
   sendTop: { flexDirection: "row", alignItems: "center", gap: 10 },
   sendTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
   status: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   statusOpen: { backgroundColor: "#F9D5CC" },
   statusText: { color: C.ink, fontSize: 10, fontWeight: "900" },
 
-  run: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 10 },
+  run: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 10 },
   runOpen: { borderColor: "#F6C4B5" },
   note: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   reviewed: { padding: 12, borderRadius: 14, backgroundColor: C.sky, gap: 4 },

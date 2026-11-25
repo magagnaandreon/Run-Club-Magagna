@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AppMark, C, Screen } from "@/components/run-ui";
+import { AppMark, C, Screen, F } from "@/components/run-ui";
 import { oauthErrorMessage, parseOAuthFragment } from "@/constants/oauth";
 import { completeSignIn } from "@/lib/_core/api";
 
@@ -63,7 +63,7 @@ export default function OAuthCallback() {
 
 const styles = StyleSheet.create({
   content: { flex: 1, justifyContent: "center", paddingVertical: 28 },
-  title: { color: C.ink, fontSize: 28, lineHeight: 32, fontWeight: "900", letterSpacing: -1, marginTop: 24 },
+  title: { color: C.ink, fontSize: 28, lineHeight: 32, fontFamily: F.display, letterSpacing: 0, marginTop: 24 },
   copy: { color: C.muted, fontSize: 15, lineHeight: 22, fontWeight: "600", marginTop: 12 },
   spinner: { alignSelf: "flex-start", marginTop: 28 },
   button: { minHeight: 52, borderRadius: 17, backgroundColor: C.ink, alignItems: "center", justifyContent: "center", marginTop: 24 },

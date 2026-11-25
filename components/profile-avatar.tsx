@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { C } from "@/components/run-ui";
+import { C, F } from "@/components/run-ui";
 
 export function ProfileAvatar({
   uri,
@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: C.coral,
+    backgroundColor: C.lime,
   },
   image: { width: "100%", height: "100%" },
-  initial: { color: C.white, fontWeight: "900" },
+  initial: { color: C.asphalt, fontFamily: F.display },
 });

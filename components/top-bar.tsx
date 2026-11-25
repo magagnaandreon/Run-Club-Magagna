@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { formatKm } from "@/components/dashboard-ui";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { AppMark, C } from "@/components/run-ui";
+import { AppMark, C, F, LaneDashes, NUM } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
 import { useInsights } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
@@ -54,6 +54,7 @@ export function TopBar({ tabs }: { tabs?: BottomTabBarProps }) {
           </Pressable>
         </View>
       </View>
+      {tabs ? null : <View style={styles.lane}><LaneDashes count={Math.max(8, Math.floor(width / 36))} color={C.asphaltSoft} /></View>}
     </View>
   );
 }
@@ -69,7 +70,7 @@ function TabPills({ state, descriptors, navigation }: BottomTabBarProps) {
       {state.routes.filter((route) => route.name !== ATHLETE_ROUTE).map((route) => {
         const { options } = descriptors[route.key];
         const focused = route.name === activeName;
-        const color = focused ? C.ink : "#B9C2C9";
+        const color = focused ? C.road : C.onAsphaltMuted;
         const onPress = () => {
           const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
           if (route.key !== currentRoute.key && !event.defaultPrevented) navigation.navigate(route.name, route.params);
@@ -80,10 +81,10 @@ function TabPills({ state, descriptors, navigation }: BottomTabBarProps) {
             onPress={onPress}
             accessibilityRole="tab"
             accessibilityState={{ selected: focused }}
-            style={({ hovered }) => [styles.tab, focused ? styles.tabActive : hovered && styles.tabHover]}
+            style={({ hovered }) => [styles.tab, !focused && hovered && styles.tabHover]}
           >
-            {options.tabBarIcon?.({ focused, color, size: 16 })}
             <Text style={[styles.tabLabel, { color }]}>{options.title ?? route.name}</Text>
+            {focused ? <View style={styles.tabLine} /> : null}
           </Pressable>
         );
       })}
@@ -93,20 +94,21 @@ function TabPills({ state, descriptors, navigation }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
-  bar: { backgroundColor: C.ink, borderBottomWidth: 1, borderBottomColor: "#1C3B47" },
+  bar: { backgroundColor: C.asphalt },
+  lane: { height: 4, overflow: "hidden", paddingHorizontal: 16 },
   inner: { width: "100%", maxWidth: 1160, alignSelf: "center", height: 64, paddingHorizontal: 24, flexDirection: "row", alignItems: "center", gap: 28 },
   innerPhone: { height: 58, paddingHorizontal: 16, gap: 10 },
   brand: { flexDirection: "row", alignItems: "center", gap: 10 },
-  brandText: { color: C.white, fontSize: 15, fontWeight: "900", letterSpacing: -0.3 },
+  brandText: { color: C.road, fontFamily: F.display, fontSize: 18, letterSpacing: 0.7, textTransform: "uppercase" },
   brandAccent: { color: C.lime },
-  nav: { flexDirection: "row", alignItems: "center", gap: 4 },
-  tab: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 14, height: 36, borderRadius: 999 },
-  tabActive: { backgroundColor: C.lime },
-  tabHover: { backgroundColor: "rgba(255,255,255,0.08)" },
-  tabLabel: { fontSize: 13, fontWeight: "800" },
+  nav: { flexDirection: "row", alignItems: "stretch", alignSelf: "stretch", gap: 2 },
+  tab: { justifyContent: "center", paddingHorizontal: 14, borderRadius: 4 },
+  tabHover: { backgroundColor: C.asphaltSoft },
+  tabLabel: { fontFamily: F.displayBold, fontSize: 17, letterSpacing: 0.6, textTransform: "uppercase" },
+  tabLine: { position: "absolute", left: 10, right: 10, bottom: 0, height: 4, backgroundColor: C.lime },
   right: { marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 8 },
-  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 999, backgroundColor: "#1C3B47" },
-  chipMuted: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "700" },
-  chipStrong: { color: C.white, fontSize: 13, fontWeight: "900" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, height: 32, borderRadius: 4, backgroundColor: C.asphaltSoft },
+  chipMuted: { color: C.onAsphaltMuted, fontFamily: F.textSemi, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 },
+  chipStrong: { color: C.road, fontFamily: F.displayBold, fontSize: 17, ...NUM },
   chipLime: { color: C.lime },
 });

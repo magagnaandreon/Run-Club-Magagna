@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-import { C, IconCircle, Pill, RouteSpark, Screen } from "@/components/run-ui";
+import { C, IconCircle, Pill, RouteSpark, Screen, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 
 export default function ActivityScreen() {
@@ -45,16 +45,16 @@ const styles = StyleSheet.create({
   top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   phase: { alignItems: "center", marginTop: 36 },
   phaseLabel: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.6 },
-  phaseTitle: { color: C.white, fontSize: 27, fontWeight: "900", letterSpacing: -0.8, marginTop: 8 },
+  phaseTitle: { color: C.white, fontSize: 27, fontFamily: F.display, letterSpacing: 0, marginTop: 8 },
   phaseSub: { color: "rgba(255,255,255,0.63)", fontSize: 13, fontWeight: "600", marginTop: 4 },
   timerBlock: { alignItems: "center", marginTop: 31 },
-  timer: { color: C.white, fontSize: 62, lineHeight: 68, fontWeight: "900", letterSpacing: -2.8, fontVariant: ["tabular-nums"] },
+  timer: { color: C.white, fontSize: 62, lineHeight: 68, fontFamily: F.display, letterSpacing: 0, fontVariant: ["tabular-nums"] },
   timerLabel: { color: "rgba(255,255,255,0.53)", fontSize: 10, fontWeight: "900", letterSpacing: 1.4, marginTop: 4 },
   route: { height: 119, justifyContent: "center", marginTop: 5 },
   metrics: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: "rgba(255,255,255,0.14)" },
   metricCell: { flex: 1, gap: 4 },
   metricValueRow: { flexDirection: "row", alignItems: "baseline", gap: 2 },
-  metricValue: { color: C.white, fontSize: 22, lineHeight: 26, fontWeight: "900", letterSpacing: -0.8, fontVariant: ["tabular-nums"] },
+  metricValue: { color: C.white, fontSize: 22, lineHeight: 26, fontFamily: F.display, letterSpacing: 0, fontVariant: ["tabular-nums"] },
   metricUnit: { color: C.lime, fontSize: 10, fontWeight: "800" },
   metricLabel: { color: "rgba(255,255,255,0.53)", fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
   metricLine: { height: 32, width: 1, backgroundColor: "rgba(255,255,255,0.14)" },

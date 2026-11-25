@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   input: { minHeight: 44, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 12, paddingVertical: 9, color: C.ink, backgroundColor: C.white, fontSize: 13, fontWeight: "600" },
   multiline: { minHeight: 58, textAlignVertical: "top" },
   stepsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
-  step: { gap: 8, padding: 12, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
+  step: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
   stepTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   stepNumber: { width: 26, height: 26, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: C.ink },
   stepNumberText: { color: C.lime, fontSize: 12, fontWeight: "900" },

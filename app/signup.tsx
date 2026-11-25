@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { AppMark, C, Screen } from "@/components/run-ui";
+import { AppMark, C, Screen, F } from "@/components/run-ui";
 import { completeSignIn } from "@/lib/_core/api";
 import { trpc } from "@/lib/trpc";
 
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: 11, marginBottom: 33 },
   brandTitle: { color: C.ink, fontSize: 19, fontWeight: "900", letterSpacing: -0.7 },
   eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 8 },
-  title: { color: C.ink, fontSize: 31, lineHeight: 35, fontWeight: "900", letterSpacing: -1 },
+  title: { color: C.ink, fontSize: 31, lineHeight: 35, fontFamily: F.display, letterSpacing: 0 },
   subtitle: { color: C.muted, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 10 },
   form: { marginTop: 25 },
   label: { color: C.ink, fontSize: 12, fontWeight: "800", marginBottom: 7 },

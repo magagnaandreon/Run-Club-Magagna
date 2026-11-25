@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { type ComponentProps, type ReactNode, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { C } from "@/components/run-ui";
+import { C, F } from "@/components/run-ui";
 import type { InsightBucket, InsightPeriod } from "@/shared/insights";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -303,7 +303,7 @@ export function Skeleton({ height = 120, radius = 22 }: { height?: number; radiu
   return <View style={[styles.skeleton, { height, borderRadius: radius }]} />;
 }
 
-const floatingShadow = "0px 10px 24px rgba(11, 23, 32, 0.08), 0px 2px 6px rgba(11, 23, 32, 0.05)";
+const floatingShadow = "0px 10px 24px rgba(30, 33, 35, 0.08), 0px 2px 6px rgba(30, 33, 35, 0.05)";
 
 const styles = StyleSheet.create({
   explain: { gap: 6 },
@@ -314,9 +314,9 @@ const styles = StyleSheet.create({
   textOnDark: { color: C.white },
   mutedOnDark: { color: "rgba(255,255,255,0.55)" },
 
-  segment: { flexDirection: "row", padding: 4, gap: 4, borderRadius: 16, backgroundColor: C.stone },
+  segment: { flexDirection: "row", padding: 4, gap: 4, borderRadius: 12, backgroundColor: C.stone },
   segmentItem: { flex: 1, minHeight: 36, alignItems: "center", justifyContent: "center", borderRadius: 12 },
-  segmentItemActive: { backgroundColor: C.ink, boxShadow: "0px 4px 10px rgba(11, 23, 32, 0.18)" },
+  segmentItemActive: { backgroundColor: C.ink, boxShadow: "0px 4px 10px rgba(30, 33, 35, 0.18)" },
   segmentItemRow: { flexDirection: "row", flexGrow: 1, flexShrink: 0, flexBasis: "auto", gap: 6, paddingHorizontal: 6 },
   segmentBadge: { minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: C.coral },
   segmentBadgeActive: { backgroundColor: C.lime },
@@ -338,14 +338,14 @@ const styles = StyleSheet.create({
 
   floatingScroll: { marginHorizontal: -20, overflow: "visible" },
   floatingRow: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18, gap: 10 },
-  floatingCard: { width: 138, padding: 14, borderRadius: 20, backgroundColor: C.white, boxShadow: floatingShadow, gap: 2 },
+  floatingCard: { width: 138, padding: 14, borderRadius: 14, backgroundColor: C.white, boxShadow: floatingShadow, gap: 2 },
   floatingTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   floatingIcon: { width: 30, height: 30, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  floatingValue: { color: C.ink, fontSize: 24, lineHeight: 28, fontWeight: "900", letterSpacing: -0.8 },
+  floatingValue: { color: C.ink, fontSize: 24, lineHeight: 28, fontFamily: F.display, letterSpacing: 0 },
   floatingUnit: { color: C.muted, fontSize: 12, fontWeight: "800", letterSpacing: 0 },
   floatingLabel: { color: C.muted, fontSize: 11, fontWeight: "700" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 14 },
-  gridCard: { flexBasis: "45%", flexGrow: 1, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", gap: 1 },
+  gridCard: { flexBasis: "45%", flexGrow: 1, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", gap: 1 },
   gridTop: { marginBottom: 8 },
   gridIcon: { width: 26, height: 26, borderRadius: 9 },
   gridValue: { fontSize: 20, lineHeight: 24 },
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   sourceText: { color: C.ink, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
   sourceTextStrava: { color: "#B23500" },
 
-  trainingRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  trainingRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   trainingDate: { width: 44, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.paper },
   trainingDay: { color: C.ink, fontSize: 17, lineHeight: 19, fontWeight: "900" },
   trainingMonth: { color: C.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
@@ -386,17 +386,17 @@ const styles = StyleSheet.create({
   trainingMetric: { color: C.inkSoft, fontSize: 12, fontWeight: "700" },
   trainingDot: { color: C.line, fontSize: 12, fontWeight: "900" },
 
-  card: { borderRadius: 24, padding: 18 },
+  card: { borderRadius: 14, padding: 18 },
   card_white: { backgroundColor: C.white, boxShadow: floatingShadow },
   card_dark: { backgroundColor: C.ink },
   card_sand: { backgroundColor: C.sand },
   card_sky: { backgroundColor: C.sky },
   card_lime: { backgroundColor: C.lime },
 
-  empty: { alignItems: "flex-start", gap: 6, padding: 18, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  empty: { alignItems: "flex-start", gap: 6, padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   emptyIcon: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.sand, marginBottom: 4 },
   emptyTitle: { color: C.ink, fontSize: 15, fontWeight: "900" },
   emptyText: { color: C.muted, fontSize: 13, lineHeight: 19, fontWeight: "600" },
 
-  skeleton: { backgroundColor: "#ECEDE6" },
+  skeleton: { backgroundColor: "#E2E3DD" },
 });

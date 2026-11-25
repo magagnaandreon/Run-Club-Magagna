@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { DateChips, EmptyState, KindBadge, Segmented, SourceBadge, STRAVA_ORANGE, formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { AppHeader, C, CoachNote, Pill, Screen, SectionTitle } from "@/components/run-ui";
+import { AppHeader, C, CoachMessage, CoachNote, Pill, Road, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
 import { CoachAthletes } from "@/components/coach-athletes";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReviewForm } from "@/components/review-form";
@@ -64,7 +64,7 @@ function CoachClub() {
 
   return (
     <Screen scroll>
-      <AppHeader eyebrow="GESTÃO DO CLUBE" title="Alunos" />
+      <AppHeader eyebrow="Gestão do clube" title="Alunos" />
       <Segmented<CoachTab>
         value={activeTab}
         onChange={(value) => { setTab(value); setNotice(""); }}
@@ -206,15 +206,20 @@ function AthleteClub() {
       <Text style={styles.activityTitle}>{assignment.title}</Text>
       <Text style={styles.cardDetail}>{assignment.objective}</Text>
       {assignment.description ? <Text style={styles.athleteNote}>{assignment.description}</Text> : null}
-      {assignment.steps.length ? <View style={styles.stepsCard}>
-        {assignment.steps.map((step, index) => <View key={step.id} style={styles.stepRow}>
-          <View style={styles.stepTimeline}><View style={styles.stepDot} />{index < assignment.steps.length - 1 ? <View style={styles.stepLine} /> : null}</View>
-          <View style={styles.flexCopy}>
-            <Text style={styles.stepLabel}>{step.label}</Text>
-            <Text style={styles.cardDetail}>{[step.durationSeconds ? `${Math.round(step.durationSeconds / 60)} min` : "", step.distanceMeters ? `${formatKm(step.distanceMeters)} km` : "", step.targetPaceSecondsPerKm ? `${formatPace(step.targetPaceSecondsPerKm)} /km` : ""].filter(Boolean).join(" · ")}</Text>
-            {step.instruction ? <Text style={styles.athleteNote}>{step.instruction}</Text> : null}
-          </View>
-        </View>)}
+      {assignment.steps.length ? <View style={styles.stepsRoad}>
+        <Road>
+          {assignment.steps.map((step, index) => (
+            <RoadStep
+              key={step.id}
+              index={index}
+              state={completed ? "done" : "next"}
+              plate={stepPlate(step)}
+              title={step.label}
+              detail={[step.durationSeconds ? `${Math.round(step.durationSeconds / 60)} min` : "", step.distanceMeters ? `${formatKm(step.distanceMeters)} km` : "", step.instruction ?? ""].filter(Boolean).join(" · ")}
+              pace={step.targetPaceSecondsPerKm ? formatPace(step.targetPaceSecondsPerKm) : undefined}
+            />
+          ))}
+        </Road>
       </View> : null}
       {assignment.run?.source === "strava" ? <View style={styles.linkedRun}>
         <Text style={styles.linkedText}>Feito com a corrida do Strava: {formatKm(assignment.run.distanceMeters, 2)} km em {Math.round(assignment.run.durationSeconds / 60)} min.</Text>
@@ -243,7 +248,7 @@ function AthleteClub() {
 
   return (
     <Screen scroll>
-      <AppHeader eyebrow="SEU CLUBE" title="Meus treinos" />
+      <AppHeader eyebrow="Seu clube" title="Meus treinos" />
       <Segmented<AthleteTab>
         value={tab}
         onChange={(value) => { setTab(value); setNotice(""); }}
@@ -296,7 +301,7 @@ function AthleteClub() {
               <MetricChip icon="time-outline" text={`${Math.floor(activity.durationSeconds / 60)} min`} />
               {activity.perceivedEffort ? <MetricChip icon="pulse-outline" text={effortLabels[activity.perceivedEffort]} /> : null}
             </View>
-            {activity.review ? <CoachNote label="TREINADOR">{activity.review.comment}</CoachNote> : null}
+            {activity.review ? <CoachMessage label="Avaliação do treinador">{activity.review.comment}</CoachMessage> : null}
           </View>
         ))}</View> : <EmptyState icon="time-outline" title="Seu histórico começa aqui" text="Treinos registrados e comentários do treinador ficam guardados nesta aba." />}
         <View style={styles.gap} />
@@ -327,7 +332,7 @@ const styles = StyleSheet.create({
   helper: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600", marginBottom: 10 },
   formSection: { color: C.ink, fontSize: 15, fontWeight: "900" },
   approveText: { color: C.ink, fontSize: 12, fontWeight: "900" },
-  athleteRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(11, 23, 32, 0.06)" },
+  athleteRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(30, 33, 35, 0.06)" },
   activityOpen: { borderColor: "#F6C4B5" },
   activityTitle: { color: C.ink, fontSize: 17, lineHeight: 22, fontWeight: "900", letterSpacing: -0.3 },
   metricChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
@@ -335,18 +340,16 @@ const styles = StyleSheet.create({
   metricChipText: { color: C.inkSoft, fontSize: 11, fontWeight: "800" },
   effortChoice: { flexGrow: 1, alignItems: "center" },
   workoutOpen: { borderColor: C.ink },
-  logBox: { gap: 10, padding: 12, borderRadius: 16, backgroundColor: C.paper },
-  stepTimeline: { alignItems: "center", width: 10, alignSelf: "stretch" },
-  stepLine: { flex: 1, width: 2, marginTop: 3, backgroundColor: C.line },
+  logBox: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: C.paper },
   stravaIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: STRAVA_ORANGE },
-  requestCard: { minHeight: 71, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, marginBottom: 9, borderRadius: 18, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(11, 23, 32, 0.06)" },
+  requestCard: { minHeight: 71, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, marginBottom: 9, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(30, 33, 35, 0.06)" },
   flexCopy: { flex: 1, gap: 3 },
   cardTitle: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
   cardDetail: { color: C.muted, fontSize: 11, lineHeight: 16, fontWeight: "600" },
   approveButton: { height: 38, flexDirection: "row", gap: 4, paddingHorizontal: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
   rejectButton: { width: 38, height: 38, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.stone },
   pressed: { opacity: 0.72 },
-  formCard: { padding: 18, borderRadius: 24, backgroundColor: C.white, gap: 9, boxShadow: "0px 10px 24px rgba(11, 23, 32, 0.08)" },
+  formCard: { padding: 18, borderRadius: 14, backgroundColor: C.white, gap: 9, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
   formLabel: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 9 },
   input: { minHeight: 46, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, color: C.ink, backgroundColor: C.paper, fontSize: 13, fontWeight: "600" },
   choiceWrap: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 3 },
@@ -357,7 +360,7 @@ const styles = StyleSheet.create({
   primaryButton: { minHeight: 49, borderRadius: 15, backgroundColor: C.lime, alignItems: "center", justifyContent: "center", marginTop: 8, paddingHorizontal: 12 },
   primaryButtonText: { color: C.ink, fontSize: 13, fontWeight: "900" },
   disabled: { opacity: 0.6 },
-  activityCard: { padding: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", marginBottom: 10, gap: 10 },
+  activityCard: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 10, gap: 10 },
   activityTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   athleteIdentity: { flexDirection: "row", alignItems: "center", gap: 7, flexShrink: 1 },
   athleteNote: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
@@ -367,10 +370,8 @@ const styles = StyleSheet.create({
   notice: { color: C.inkSoft, backgroundColor: C.sky, padding: 11, borderRadius: 13, marginBottom: 12, fontSize: 12, lineHeight: 17, fontWeight: "700" },
   errorCard: { padding: 13, backgroundColor: "#F9D5CC", borderRadius: 14, marginBottom: 13 },
   errorText: { color: "#762E21", fontSize: 12, lineHeight: 17, fontWeight: "700" },
-  athleteWorkout: { padding: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6", gap: 10 },
-  stepsCard: { padding: 12, borderRadius: 15, backgroundColor: C.paper, gap: 9, marginTop: 3 },
-  stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingBottom: 4 },
-  stepDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5, backgroundColor: C.limeDeep },
+  athleteWorkout: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", gap: 10 },
+  stepsRoad: { marginTop: 14 },
   stepLabel: { color: C.ink, fontSize: 12, fontWeight: "900" },
   metricsInputRow: { flexDirection: "row", gap: 9 },
   metricInput: { flex: 1 },

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { CoachPlans } from "@/components/coach-plans";
 import { EmptyState } from "@/components/dashboard-ui";
-import { C, Pill, PrimaryButton, Row, Screen, SectionTitle } from "@/components/run-ui";
+import { AppHeader, C, Pill, PrimaryButton, Row, Screen, SectionTitle, F } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
@@ -24,7 +24,7 @@ function AthletePlans() {
   if (assignments.isLoading) return <Screen><View style={styles.empty}><Text style={styles.currentText}>Carregando seu plano…</Text></View></Screen>;
 
   return <Screen scroll>
-    <View style={styles.header}><View><Text style={styles.eyebrow}>SEU CAMINHO</Text><Text style={styles.title}>Planos</Text></View><View style={styles.compass}><Ionicons name="compass" size={21} color={C.ink} /></View></View>
+    <AppHeader eyebrow="Seu caminho" title="Planos" />
 
     <View style={styles.currentPlan}><View style={styles.currentTop}><Pill label={nextAssignment ? "PRÓXIMO TREINO" : "AGUARDANDO"} tone="lime" /><Text style={styles.week}>{nextAssignment?.scheduledDate || "SEU CLUBE"}</Text></View><Text style={styles.currentTitle}>{nextAssignment?.title || "Aguardando seu treinador"}</Text><Text style={styles.currentText}>{nextAssignment?.objective || "Os treinos atribuídos aparecerão aqui, com as etapas e orientações do seu treinador."}</Text><View style={styles.currentStats}><View><Text style={styles.statValue}>{nextAssignment?.steps.length ?? 0}</Text><Text style={styles.statLabel}>etapas</Text></View><View><Text style={styles.statValue}>{assignments.data?.length ?? 0}</Text><Text style={styles.statLabel}>treinos recebidos</Text></View><View><Text style={styles.statValue}>{completedCount}</Text><Text style={styles.statLabel}>concluídos</Text></View></View><PrimaryButton label="Abrir Meu clube" icon="arrow-forward" onPress={() => router.push("/(tabs)/club")} style={styles.currentButton} /></View>
 
@@ -43,14 +43,10 @@ function PlanCard({ color, icon, title, detail, meta, onPress }: { color: string
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 22 },
-  eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 5 },
-  title: { color: C.ink, fontSize: 31, fontWeight: "900", letterSpacing: -1.1 },
-  compass: { width: 43, height: 43, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
-  currentPlan: { padding: 20, borderRadius: 28, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(11, 23, 32, 0.2)" },
+  currentPlan: { padding: 20, borderRadius: 14, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(30, 33, 35, 0.2)" },
   currentTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   week: { color: "rgba(255,255,255,0.62)", fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
-  currentTitle: { color: C.white, fontSize: 26, lineHeight: 30, fontWeight: "900", letterSpacing: -0.8, marginTop: 22 },
+  currentTitle: { color: C.white, fontSize: 26, lineHeight: 30, fontFamily: F.display, letterSpacing: 0, marginTop: 22 },
   currentText: { color: "rgba(255,255,255,0.72)", fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 6 },
   currentStats: { flexDirection: "row", justifyContent: "space-between", marginTop: 22 },
   statValue: { color: C.white, fontSize: 16, fontWeight: "900" },
@@ -58,14 +54,14 @@ const styles = StyleSheet.create({
   currentButton: { marginTop: 22 },
   gap: { height: 30 },
   planList: { gap: 12 },
-  planCard: { minHeight: 128, flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 16, borderRadius: 23 },
+  planCard: { minHeight: 128, flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 16, borderRadius: 14 },
   planIcon: { width: 39, height: 39, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.white },
   planCopy: { flex: 1, gap: 3 },
   planTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
   planDetail: { color: C.inkSoft, fontSize: 12, lineHeight: 17, fontWeight: "600" },
   planMeta: { color: C.ink, fontSize: 10, fontWeight: "900", letterSpacing: 0.25, marginTop: 5 },
-  guideCard: { paddingHorizontal: 16, borderRadius: 22, backgroundColor: C.white, boxShadow: "0px 10px 24px rgba(11, 23, 32, 0.08)" },
-  empty: { padding: 18, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, gap: 6 },
+  guideCard: { paddingHorizontal: 16, borderRadius: 14, backgroundColor: C.white, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
+  empty: { padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, gap: 6 },
   emptyTitle: { color: C.ink, fontSize: 15, fontWeight: "900" },
   pressed: { opacity: 0.75 },
 });

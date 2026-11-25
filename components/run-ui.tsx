@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps, ReactNode } from "react";
+import { useEffect, type ComponentProps, type ReactNode } from "react";
 import {
   Pressable,
   ScrollView,
@@ -11,26 +11,49 @@ import {
   type ViewStyle,
 } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 
 import { useIsDesktop } from "@/hooks/use-layout";
 
+/** "Corrida de rua": asfalto, pista e cone. Laranja é só a voz do treinador. */
 export const C = {
-  ink: "#0B1720",
-  inkSoft: "#263744",
-  navy: "#10232D",
-  paper: "#F7F7F2",
-  white: "#FFFFFF",
-  stone: "#E8E9E1",
-  line: "#D9DDD3",
-  muted: "#69747B",
+  asphalt: "#2B2E30",
+  asphaltSoft: "#3A3E41",
+  road: "#F4F4EF",
+  concrete: "#ECECE7",
+  cone: "#FF6A2B",
+  coneInk: "#B9430F",
+  coneTint: "#FFE4D7",
+  onAsphaltMuted: "#B9BCB6",
+  ink: "#1E2123",
+  inkSoft: "#3C4043",
+  navy: "#2B2E30",
+  paper: "#ECECE7",
+  white: "#F4F4EF",
+  stone: "#DADBD6",
+  line: "#D2D3CD",
+  muted: "#5D6264",
   lime: "#D7F752",
   limeDeep: "#A8C92B",
-  coral: "#F1785B",
-  sky: "#CFEAF1",
-  skyDeep: "#90C7D3",
-  sand: "#F1E6CE",
+  coral: "#FF6A2B",
+  sky: "#E2E3DD",
+  skyDeep: "#C4C6BF",
+  sand: "#E2E3DD",
 } as const;
+
+/** Barlow Condensed for titles and numbers, Barlow for text. */
+export const F = {
+  display: "BarlowCondensed_800ExtraBold",
+  displayBold: "BarlowCondensed_700Bold",
+  displayMedium: "BarlowCondensed_600SemiBold",
+  text: "Barlow_500Medium",
+  textRegular: "Barlow_400Regular",
+  textSemi: "Barlow_600SemiBold",
+  textBold: "Barlow_700Bold",
+} as const;
+
+export const NUM: TextStyle = { fontVariant: ["tabular-nums"] };
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -44,6 +67,99 @@ export function Screen({ children, scroll = false, wide = false, edges = ["top",
   return <SafeAreaView edges={edges} style={styles.screen}>{body}</SafeAreaView>;
 }
 
+/** A painted lane line: 22 px dashes. */
+export function LaneDashes({ color = C.road, vertical = false, count = 14 }: { color?: string; vertical?: boolean; count?: number }) {
+  return (
+    <View style={vertical ? styles.dashesV : styles.dashesH} pointerEvents="none">
+      {Array.from({ length: count }, (_, i) => <View key={i} style={[vertical ? styles.dashV : styles.dashH, { backgroundColor: color }]} />)}
+    </View>
+  );
+}
+
+/** Asphalt top of a screen, edge to edge, with the lane line along its bottom. */
+export function RoadHeader({ eyebrow, title, subtitle, right, children }: { eyebrow?: string; title: string; subtitle?: string; right?: ReactNode; children?: ReactNode }) {
+  const desktop = useIsDesktop();
+  return (
+    <View style={[styles.roadHeader, desktop && styles.roadHeaderDesktop]}>
+      <View style={styles.roadHeaderInner}>
+        <View style={styles.roadHeaderRow}>
+          <View style={styles.headerCopy}>
+            {eyebrow ? <Text style={styles.roadEyebrow}>{eyebrow}</Text> : null}
+            <Text style={styles.roadTitle}>{title}</Text>
+            {subtitle ? <Text style={styles.roadSubtitle}>{subtitle}</Text> : null}
+          </View>
+          {right}
+        </View>
+        {children}
+      </View>
+      <View style={styles.roadHeaderLane}><LaneDashes count={desktop ? 22 : 12} /></View>
+    </View>
+  );
+}
+
+export function HeaderStat({ value, label }: { value: string; label: string }) {
+  return <View><Text style={styles.headerStatValue}>{value}</Text><Text style={styles.headerStatLabel}>{label}</Text></View>;
+}
+
+export function HeaderStats({ children }: { children: ReactNode }) {
+  return <View style={styles.headerStats}>{children}</View>;
+}
+
+/** Comes up once, staggered; stays still when the system asks for less motion. */
+export function Settle({ index = 0, children, style }: { index?: number; children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const reduced = useReducedMotion();
+  const progress = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    if (reduced) return;
+    progress.value = withDelay(60 + index * 55, withTiming(1, { duration: 320, easing: Easing.out(Easing.exp) }));
+  }, [index, progress, reduced]);
+  const animated = useAnimatedStyle(() => ({ opacity: 0.001 + progress.value * 0.999, transform: [{ translateY: (1 - progress.value) * 14 }] }));
+  return <Animated.View style={[animated, style]}>{children}</Animated.View>;
+}
+
+/** What goes on a step's km plate: the distance, else the minutes. */
+export function stepPlate(step: { distanceMeters: number | null; durationSeconds: number | null }) {
+  if (step.distanceMeters) return step.distanceMeters < 1000 ? `${step.distanceMeters}m` : (step.distanceMeters / 1000).toFixed(step.distanceMeters % 1000 ? 1 : 0).replace(".", ",");
+  if (step.durationSeconds) return `${Math.round(step.durationSeconds / 60)}'`;
+  return "·";
+}
+
+export type RoadStepState = "done" | "now" | "next";
+
+/** Workout steps laid along a road, each with its km plate. */
+export function Road({ children }: { children: ReactNode }) {
+  return (
+    <View style={styles.road}>
+      <View style={styles.roadLane} pointerEvents="none"><LaneDashes vertical count={30} /></View>
+      {children}
+    </View>
+  );
+}
+
+export function RoadStep({ plate, title, detail, pace, paceUnit = "min/km", state = "next", index = 0 }: { plate: string; title: string; detail?: string; pace?: string; paceUnit?: string; state?: RoadStepState; index?: number }) {
+  const now = state === "now";
+  return (
+    <Settle index={index} style={[styles.step, now && styles.stepNow, state === "done" && styles.stepDone]}>
+      <View style={[styles.plate, now && styles.plateNow]}><Text style={[styles.plateText, now && styles.plateTextNow]} numberOfLines={1}>{plate}</Text></View>
+      <View style={styles.stepCopy}>
+        <Text style={styles.stepTitle} numberOfLines={2}>{title}</Text>
+        {detail ? <Text style={[styles.stepDetail, now && styles.stepDetailNow]} numberOfLines={3}>{detail}</Text> : null}
+      </View>
+      {pace ? <View style={styles.paceCell}><Text style={styles.pace}>{pace}</Text><Text style={[styles.paceUnit, now && styles.stepDetailNow]}>{paceUnit}</Text></View> : null}
+    </Settle>
+  );
+}
+
+/** The coach's own words: the only thing painted cone orange. */
+export function CoachMessage({ children, label = "Recado do treinador" }: { children: ReactNode; label?: string }) {
+  return (
+    <View style={styles.coachMsg}>
+      <View style={styles.coachMsgHead}><Ionicons name="megaphone" size={15} color={C.coneInk} /><Text style={styles.coachMsgLabel}>{label}</Text></View>
+      <Text style={styles.coachMsgText}>{children}</Text>
+    </View>
+  );
+}
+
 export function AppMark({ inverse = false, size = 42 }: { inverse?: boolean; size?: number }) {
   const scale = size / 42;
   return (
@@ -54,16 +170,9 @@ export function AppMark({ inverse = false, size = 42 }: { inverse?: boolean; siz
   );
 }
 
-export function AppHeader({ eyebrow, title, right }: { eyebrow?: string; title: string; right?: ReactNode }) {
-  return (
-    <View style={styles.header}>
-      <View style={styles.headerCopy}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text style={styles.headerTitle}>{title}</Text>
-      </View>
-      {right}
-    </View>
-  );
+/** Every screen's title sits on the asphalt top. */
+export function AppHeader({ eyebrow, title, subtitle, right, children }: { eyebrow?: string; title: string; subtitle?: string; right?: ReactNode; children?: ReactNode }) {
+  return <RoadHeader eyebrow={eyebrow} title={title} subtitle={subtitle} right={right}>{children}</RoadHeader>;
 }
 
 export function IconCircle({ name, onPress, dark = false, size = 42 }: { name: IconName; onPress?: () => void; dark?: boolean; size?: number }) {
@@ -92,8 +201,8 @@ export function SecondaryButton({ label, icon, onPress }: { label: string; icon?
 
 export function Pill({ label, tone = "light", icon }: { label: string; tone?: "light" | "lime" | "dark" | "coral"; icon?: IconName }) {
   const toneStyle = tone === "lime" ? styles.pillLime : tone === "dark" ? styles.pillDark : tone === "coral" ? styles.pillCoral : styles.pillLight;
-  const textStyle = tone === "dark" ? styles.pillTextDark : styles.pillText;
-  return <View style={[styles.pill, toneStyle]}>{icon ? <Ionicons name={icon} size={13} color={tone === "dark" ? C.white : C.ink} /> : null}<Text style={textStyle}>{label}</Text></View>;
+  const textStyle = tone === "dark" ? styles.pillTextDark : tone === "coral" ? styles.pillTextCone : styles.pillText;
+  return <View style={[styles.pill, toneStyle]}>{icon ? <Ionicons name={icon} size={13} color={tone === "dark" ? C.road : tone === "coral" ? C.coneInk : C.ink} /> : null}<Text style={textStyle}>{label}</Text></View>;
 }
 
 export function SectionTitle({ title, action, onPress }: { title: string; action?: string; onPress?: () => void }) {
@@ -118,16 +227,16 @@ export function ProgressRing({ value, label, sublabel, size = 128 }: { value: nu
 
 export function RouteSpark({ light = false, height = 92 }: { light?: boolean; height?: number }) {
   const stroke = light ? C.lime : C.ink;
-  const dot = light ? C.white : C.lime;
-  return <Svg width="100%" height={height} viewBox="0 0 320 92" preserveAspectRatio="none"><Path d="M 8 72 C 48 70, 49 22, 91 26 S 130 81, 171 64 S 195 10, 230 25 S 276 80, 314 19" fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray="1 12" /><Circle cx="9" cy="72" r="7" fill={dot} /><Circle cx="314" cy="19" r="7" fill={dot} /></Svg>;
+  const dot = light ? C.road : C.lime;
+  return <Svg width="100%" height={height} viewBox="0 0 320 92" preserveAspectRatio="none"><Path d="M 8 72 C 48 70, 49 22, 91 26 S 130 81, 171 64 S 195 10, 230 25 S 276 80, 314 19" fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="butt" strokeDasharray="14 9" /><Circle cx="9" cy="72" r="7" fill={dot} /><Circle cx="314" cy="19" r="7" fill={dot} /></Svg>;
 }
 
 export function CoachNote({ children, label = "TREINADOR" }: { children: ReactNode; label?: string }) {
-  return <View style={styles.coachNote}><View style={styles.coachBadge}><Ionicons name="sparkles" size={16} color={C.ink} /></View><View style={styles.coachCopy}><Text style={styles.coachLabel}>{label}</Text><Text style={styles.coachText}>{children}</Text></View></View>;
+  return <View style={styles.coachNote}><View style={styles.coachBadge}><Ionicons name="information" size={17} color={C.road} /></View><View style={styles.coachCopy}><Text style={styles.coachLabel}>{label}</Text><Text style={styles.coachText}>{children}</Text></View></View>;
 }
 
 export function Row({ icon, title, detail, accessory, onPress }: { icon: IconName; title: string; detail?: string; accessory?: ReactNode; onPress?: () => void }) {
-  const content = <><View style={styles.rowIcon}><Ionicons name={icon} size={18} color={C.ink} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{title}</Text>{detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}</View>{accessory ?? (onPress ? <Ionicons name="chevron-forward" size={18} color={C.muted} /> : null)}</>;
+  const content = <><View style={styles.rowIcon}><Ionicons name={icon} size={18} color={C.road} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{title}</Text>{detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}</View>{accessory ?? (onPress ? <Ionicons name="chevron-forward" size={18} color={C.muted} /> : null)}</>;
   if (!onPress) return <View style={styles.row}>{content}</View>;
   return <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>{content}</Pressable>;
 }
@@ -137,7 +246,7 @@ export function BackButton({ onPress, label = "Voltar" }: { onPress: () => void;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.paper },
+  screen: { flex: 1, backgroundColor: C.concrete },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 34 },
   // Keeps screens phone-shaped on wide browsers instead of stretching edge to edge.
   scrollContentDesktop: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 48 },
@@ -145,56 +254,97 @@ const styles = StyleSheet.create({
   columnDesktop: { maxWidth: 760 },
   columnWide: { maxWidth: 1112 },
   fill: { flex: 1 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
+
+  dashesH: { flexDirection: "row", justifyContent: "space-between", height: 4 },
+  dashH: { width: 22, height: 4 },
+  dashesV: { flex: 1, justifyContent: "space-between", width: 2 },
+  dashV: { width: 2, height: 8 },
+
+  roadHeader: { backgroundColor: C.asphalt, marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26, marginBottom: 22 },
+  roadHeaderDesktop: { marginHorizontal: 0, borderRadius: 14, paddingHorizontal: 26, paddingTop: 22, overflow: "hidden" },
+  roadHeaderInner: { gap: 0 },
+  roadHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  roadHeaderLane: { position: "absolute", left: 20, right: 20, bottom: 0, overflow: "hidden" },
+  roadEyebrow: { color: C.onAsphaltMuted, fontFamily: F.textSemi, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 },
+  roadTitle: { color: C.road, fontFamily: F.display, fontSize: 40, lineHeight: 42, textTransform: "uppercase" },
+  roadSubtitle: { color: C.onAsphaltMuted, fontFamily: F.text, fontSize: 14, lineHeight: 20, marginTop: 6, maxWidth: 520 },
+  headerStats: { flexDirection: "row", flexWrap: "wrap", gap: 22, marginTop: 16 },
+  headerStatValue: { color: C.road, fontFamily: F.displayBold, fontSize: 30, lineHeight: 32, ...NUM },
+  headerStatLabel: { color: C.onAsphaltMuted, fontFamily: F.text, fontSize: 13 },
+
+  road: { position: "relative", paddingLeft: 58 },
+  roadLane: { position: "absolute", left: 18, top: 4, bottom: 4, width: 10, borderRadius: 3, backgroundColor: C.asphalt, alignItems: "center", paddingVertical: 4 },
+  step: { position: "relative", marginBottom: 12, minHeight: 64, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: C.road, borderWidth: 1, borderColor: C.line, flexDirection: "row", alignItems: "center", gap: 12 },
+  stepNow: { backgroundColor: C.lime, borderColor: C.limeDeep },
+  stepDone: { opacity: 0.55 },
+  plate: { position: "absolute", left: -58, width: 48, height: 36, borderRadius: 6, borderWidth: 2, borderColor: C.road, backgroundColor: C.asphalt, alignItems: "center", justifyContent: "center", zIndex: 1 },
+  plateNow: { backgroundColor: C.lime, borderColor: C.asphalt },
+  plateText: { color: C.road, fontFamily: F.display, fontSize: 18, ...NUM },
+  plateTextNow: { color: C.asphalt },
+  stepCopy: { flex: 1, gap: 2 },
+  stepTitle: { color: C.ink, fontFamily: F.textBold, fontSize: 16, lineHeight: 20 },
+  stepDetail: { color: C.muted, fontFamily: F.text, fontSize: 13, lineHeight: 17 },
+  stepDetailNow: { color: "#3E4A12" },
+  paceCell: { minWidth: 58, alignItems: "flex-end" },
+  pace: { color: C.ink, fontFamily: F.displayBold, fontSize: 26, lineHeight: 28, ...NUM },
+  paceUnit: { color: C.muted, fontFamily: F.textSemi, fontSize: 11 },
+
+  coachMsg: { borderRadius: 10, borderWidth: 1.5, borderColor: C.cone, backgroundColor: C.coneTint, paddingHorizontal: 14, paddingVertical: 12, gap: 4 },
+  coachMsgHead: { flexDirection: "row", alignItems: "center", gap: 6 },
+  coachMsgLabel: { color: C.coneInk, fontFamily: F.textBold, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" },
+  coachMsgText: { color: C.ink, fontFamily: F.text, fontSize: 15, lineHeight: 21 },
+
   mark: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   markArc: { position: "absolute", left: 7, top: 9 },
-  markDash: { position: "absolute", borderRadius: 12, transform: [{ rotate: "-35deg" }] },
+  markDash: { position: "absolute", borderRadius: 2, transform: [{ rotate: "-35deg" }] },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 22 },
   headerCopy: { flexShrink: 1 },
-  eyebrow: { color: C.muted, fontSize: 11, fontWeight: "800", letterSpacing: 1.45, marginBottom: 4 },
-  headerTitle: { color: C.ink, fontSize: 28, lineHeight: 33, fontWeight: "800", letterSpacing: -0.8 },
-  iconCircle: { alignItems: "center", justifyContent: "center", backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
-  iconCircleDark: { backgroundColor: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.2)" },
-  pressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
-  primaryButton: { minHeight: 56, paddingHorizontal: 19, borderRadius: 18, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 10 },
+  eyebrow: { color: C.muted, fontFamily: F.textSemi, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 },
+  headerTitle: { color: C.ink, fontFamily: F.display, fontSize: 34, lineHeight: 36, textTransform: "uppercase" },
+  iconCircle: { alignItems: "center", justifyContent: "center", backgroundColor: C.road, borderWidth: 1, borderColor: C.line },
+  iconCircleDark: { backgroundColor: C.asphaltSoft, borderColor: C.asphaltSoft },
+  primaryButton: { minHeight: 56, paddingHorizontal: 20, borderRadius: 12, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 10 },
   primaryButtonLime: { backgroundColor: C.lime },
-  primaryButtonDark: { backgroundColor: C.ink },
-  primaryButtonText: { color: C.ink, fontSize: 16, fontWeight: "800", letterSpacing: -0.2 },
-  primaryButtonTextDark: { color: C.white },
-  secondaryButton: { minHeight: 52, paddingHorizontal: 18, borderRadius: 17, borderWidth: 1, borderColor: C.line, backgroundColor: C.white, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
-  secondaryButtonText: { color: C.ink, fontSize: 15, fontWeight: "800" },
-  pill: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  pillLight: { backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  primaryButtonDark: { backgroundColor: C.asphalt },
+  primaryButtonText: { color: C.ink, fontFamily: F.display, fontSize: 21, letterSpacing: 0.6, textTransform: "uppercase" },
+  primaryButtonTextDark: { color: C.lime },
+  secondaryButton: { minHeight: 52, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1.5, borderColor: C.asphalt, backgroundColor: "transparent", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
+  secondaryButtonText: { color: C.ink, fontFamily: F.displayBold, fontSize: 18, letterSpacing: 0.4, textTransform: "uppercase" },
+  pill: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+  pillLight: { backgroundColor: C.road, borderWidth: 1, borderColor: C.line },
   pillLime: { backgroundColor: C.lime },
-  pillDark: { backgroundColor: C.ink },
-  pillCoral: { backgroundColor: "#F9D5CC" },
-  pillText: { color: C.ink, fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
-  pillTextDark: { color: C.white, fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
-  sectionTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 13 },
-  sectionTitle: { color: C.ink, fontSize: 19, fontWeight: "800", letterSpacing: -0.4 },
-  textAction: { flexDirection: "row", alignItems: "center", gap: 4, padding: 4 },
-  textActionLabel: { color: C.ink, fontSize: 13, fontWeight: "800" },
-  metric: { gap: 3 },
-  metricValue: { color: C.ink, fontSize: 25, lineHeight: 29, fontWeight: "800", letterSpacing: -0.8 },
-  metricValueReverse: { color: C.white },
-  metricLabel: { color: C.muted, fontSize: 11, fontWeight: "700" },
-  metricLabelReverse: { color: "rgba(255,255,255,0.68)" },
+  pillDark: { backgroundColor: C.asphalt },
+  pillCoral: { backgroundColor: C.coneTint, borderWidth: 1, borderColor: C.cone },
+  pillText: { color: C.ink, fontFamily: F.displayBold, fontSize: 13, letterSpacing: 0.5, textTransform: "uppercase" },
+  pillTextDark: { color: C.road, fontFamily: F.displayBold, fontSize: 13, letterSpacing: 0.5, textTransform: "uppercase" },
+  pillTextCone: { color: C.coneInk, fontFamily: F.displayBold, fontSize: 13, letterSpacing: 0.5, textTransform: "uppercase" },
+  sectionTitleRow: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 },
+  sectionTitle: { color: C.ink, fontFamily: F.display, fontSize: 24, textTransform: "uppercase" },
+  textAction: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 6, paddingLeft: 8 },
+  textActionLabel: { color: C.ink, fontFamily: F.textBold, fontSize: 14 },
+  metric: { gap: 0 },
+  metricValue: { color: C.ink, fontFamily: F.displayBold, fontSize: 28, lineHeight: 30, ...NUM },
+  metricValueReverse: { color: C.road },
+  metricLabel: { color: C.muted, fontFamily: F.text, fontSize: 12 },
+  metricLabelReverse: { color: C.onAsphaltMuted },
   bars: { height: 58, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 7 },
   barSlot: { flex: 1, alignItems: "center", justifyContent: "flex-end" },
-  bar: { width: "100%", maxWidth: 18, borderRadius: 9 },
-  barHighlight: { backgroundColor: C.lime },
-  barMuted: { backgroundColor: C.stone },
-  ringLabel: { color: C.ink, fontSize: 23, lineHeight: 26, fontWeight: "900", letterSpacing: -0.8 },
-  ringSubLabel: { color: C.muted, fontSize: 10, fontWeight: "800", marginTop: 1 },
-  coachNote: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: C.sky, borderRadius: 20, padding: 16 },
-  coachBadge: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: C.lime, marginTop: 1 },
+  bar: { width: "100%", maxWidth: 18, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
+  barHighlight: { backgroundColor: C.limeDeep },
+  barMuted: { backgroundColor: C.asphalt },
+  ringLabel: { color: C.ink, fontFamily: F.display, fontSize: 28, lineHeight: 30, ...NUM },
+  ringSubLabel: { color: C.muted, fontFamily: F.textSemi, fontSize: 11, marginTop: 1 },
+  coachNote: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: C.road, borderWidth: 1, borderColor: C.line, borderRadius: 10, padding: 14 },
+  coachBadge: { width: 30, height: 30, borderRadius: 6, alignItems: "center", justifyContent: "center", backgroundColor: C.asphalt, marginTop: 1 },
   coachCopy: { flex: 1, gap: 3 },
-  coachLabel: { color: C.ink, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
-  coachText: { color: C.inkSoft, fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  row: { minHeight: 66, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },
-  rowIcon: { width: 38, height: 38, borderRadius: 14, backgroundColor: C.sand, alignItems: "center", justifyContent: "center" },
+  coachLabel: { color: C.muted, fontFamily: F.textBold, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" },
+  coachText: { color: C.inkSoft, fontFamily: F.text, fontSize: 14, lineHeight: 20 },
+  row: { minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },
+  rowIcon: { width: 38, height: 38, borderRadius: 8, backgroundColor: C.asphalt, alignItems: "center", justifyContent: "center" },
   rowCopy: { flex: 1, gap: 2 },
-  rowTitle: { color: C.ink, fontSize: 14, fontWeight: "800" },
-  rowDetail: { color: C.muted, fontSize: 12, fontWeight: "600" },
-  backButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingRight: 10, marginBottom: 14 },
-  backLabel: { color: C.ink, fontSize: 14, fontWeight: "800" },
+  rowTitle: { color: C.ink, fontFamily: F.textBold, fontSize: 15 },
+  rowDetail: { color: C.muted, fontFamily: F.text, fontSize: 13 },
+  backButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 10, paddingRight: 10, marginBottom: 14 },
+  backLabel: { color: C.ink, fontFamily: F.textBold, fontSize: 15 },
 });

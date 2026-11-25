@@ -122,7 +122,7 @@ function Header() {
 const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.6 },
-  card: { padding: 18, borderRadius: 24, backgroundColor: C.ink, gap: 10, marginBottom: 14 },
+  card: { padding: 18, borderRadius: 14, backgroundColor: C.ink, gap: 10, marginBottom: 14 },
   header: { flexDirection: "row", alignItems: "center", gap: 8 },
   badge: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
   title: { color: C.white, fontSize: 15, fontWeight: "900" },
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   secondary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: "rgba(215,247,82,0.5)" },
   secondaryText: { color: C.lime, fontSize: 13, fontWeight: "900" },
   week: { gap: 8, marginTop: 4 },
-  day: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.06)" },
+  day: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.06)" },
   dayCopy: { flex: 1, gap: 2 },
   dayDate: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 0.4 },
   dayTitle: { color: C.white, fontSize: 14, fontWeight: "900" },

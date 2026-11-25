@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
-import { BackButton, C, CoachNote, Metric, Pill, PrimaryButton, RouteSpark, Screen, SectionTitle } from "@/components/run-ui";
+import { BackButton, C, CoachMessage, Metric, Pill, PrimaryButton, RouteSpark, Screen, SectionTitle, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 
 export default function WorkoutDetailsScreen() {
@@ -21,7 +21,7 @@ export default function WorkoutDetailsScreen() {
     </View>
 
     <View style={styles.gap} />
-    <CoachNote>Não persiga um número no relógio hoje. Se o ritmo parecer pesado, diminua um pouco e preserve a leveza.</CoachNote>
+    <CoachMessage>Não persiga um número no relógio hoje. Se o ritmo parecer pesado, diminua um pouco e preserve a leveza.</CoachMessage>
 
     <View style={styles.gap} />
     <View style={styles.infoCard}><View style={styles.infoRow}><Ionicons name="musical-notes-outline" size={18} color={C.ink} /><Text style={styles.infoTitle}>Áudio do treinador</Text><Text style={styles.infoDetail}>Ativado</Text></View><View style={styles.infoRow}><Ionicons name="location-outline" size={18} color={C.ink} /><Text style={styles.infoTitle}>Distância guiada</Text><Text style={styles.infoDetail}>Opcional</Text></View></View>
@@ -37,9 +37,9 @@ function Step({ number, title, detail, tone, last = false }: { number: string; t
 }
 
 const styles = StyleSheet.create({
-  hero: { padding: 21, overflow: "hidden", borderRadius: 29, backgroundColor: C.ink },
+  hero: { padding: 21, overflow: "hidden", borderRadius: 14, backgroundColor: C.ink },
   heroTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  heroTitle: { color: C.white, fontSize: 31, lineHeight: 34, fontWeight: "900", letterSpacing: -1, marginTop: 24 },
+  heroTitle: { color: C.white, fontSize: 31, lineHeight: 34, fontFamily: F.display, letterSpacing: 0, marginTop: 24 },
   heroText: { color: "rgba(255,255,255,0.7)", fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 7, maxWidth: 290 },
   metrics: { flexDirection: "row", justifyContent: "space-between", marginTop: 4 },
   gap: { height: 29 },
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   stepCopy: { flex: 1, paddingTop: 7, gap: 4 },
   stepTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
   stepDetail: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
-  infoCard: { paddingHorizontal: 16, borderRadius: 22, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  infoCard: { paddingHorizontal: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   infoRow: { minHeight: 55, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: 1, borderBottomColor: C.line },
   infoTitle: { flex: 1, color: C.ink, fontSize: 13, fontWeight: "800" },
   infoDetail: { color: C.muted, fontSize: 12, fontWeight: "700" },

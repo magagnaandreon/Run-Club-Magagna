@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { BarChart, DeltaChip, EmptyState, Explain, PeriodSelector, Skeleton, delta, formatDay, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
 import { RunAnalysisSection } from "@/components/run-analysis";
-import { C, PrimaryButton, ProgressRing, Screen, SectionTitle } from "@/components/run-ui";
+import { AppHeader, C, PrimaryButton, ProgressRing, Screen, SectionTitle, F } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
 import { localToday, useInsights } from "@/hooks/use-insights";
 import { useIsDesktop } from "@/hooks/use-layout";
@@ -24,10 +24,7 @@ export default function ProgressScreen() {
   const data = insights.data;
 
   const header = (
-    <View style={styles.header}>
-      <Text style={styles.eyebrow}>{isCoach ? "SEU TREINO E A TURMA" : "SUA EVOLUÇÃO"}</Text>
-      <Text style={styles.title}>Dados</Text>
-    </View>
+    <AppHeader eyebrow={isCoach ? "Seu treino e a turma" : "Sua evolução"} title="Dados" />
   );
 
   if (!data) {
@@ -186,15 +183,12 @@ const styles = StyleSheet.create({
   split: { flexDirection: "row", alignItems: "flex-start", gap: 20 },
   side: { flex: 1, minWidth: 0, marginTop: 16 },
   heroDesktop: { flex: 1.35, minWidth: 0 },
-  header: { paddingTop: 6, marginBottom: 18 },
-  eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginBottom: 5 },
-  title: { color: C.ink, fontSize: 31, fontWeight: "900", letterSpacing: -1.1 },
 
-  hero: { marginTop: 16, padding: 18, borderRadius: 24, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(11, 23, 32, 0.22)" },
+  hero: { marginTop: 16, padding: 18, borderRadius: 14, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(30, 33, 35, 0.22)" },
   heroTop: { marginBottom: 14 },
   heroEyebrow: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.3, marginBottom: 6 },
   heroValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroValue: { color: C.white, fontSize: 34, lineHeight: 38, fontWeight: "900", letterSpacing: -1.2 },
+  heroValue: { color: C.white, fontSize: 34, lineHeight: 38, fontFamily: F.display, letterSpacing: 0 },
   heroUnit: { color: "rgba(255,255,255,0.6)", fontSize: 16, fontWeight: "800", marginTop: 12, marginRight: 4 },
   heroRange: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600", marginTop: 2 },
   heroMetrics: { flexDirection: "row", marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" },
@@ -203,23 +197,23 @@ const styles = StyleSheet.create({
   heroMetricLabel: { color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: "700" },
 
   records: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  record: { flexBasis: "47%", flexGrow: 1, padding: 16, borderRadius: 22, gap: 4 },
+  record: { flexBasis: "47%", flexGrow: 1, padding: 16, borderRadius: 14, gap: 4 },
   recordIcon: { width: 34, height: 34, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.7)", marginBottom: 10 },
-  recordValue: { color: C.ink, fontSize: 20, fontWeight: "900", letterSpacing: -0.5 },
+  recordValue: { color: C.ink, fontSize: 20, fontFamily: F.display, letterSpacing: 0 },
   recordLabel: { color: C.ink, fontSize: 12, fontWeight: "800" },
   recordHint: { color: C.inkSoft, fontSize: 11, lineHeight: 15, fontWeight: "600" },
 
-  consistency: { flexDirection: "row", alignItems: "center", gap: 18, padding: 18, borderRadius: 24, backgroundColor: C.white, boxShadow: "0px 10px 24px rgba(11, 23, 32, 0.08)" },
+  consistency: { flexDirection: "row", alignItems: "center", gap: 18, padding: 18, borderRadius: 14, backgroundColor: C.white, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
   consistencyCopy: { flex: 1, gap: 6 },
   consistencyTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
   consistencyText: { color: C.inkSoft, fontSize: 13, lineHeight: 19, fontWeight: "600" },
 
-  planCard: { padding: 18, borderRadius: 24, backgroundColor: C.sand, gap: 10 },
+  planCard: { padding: 18, borderRadius: 14, backgroundColor: C.sand, gap: 10 },
   planTop: { flexDirection: "row", alignItems: "baseline", gap: 8 },
-  planValue: { color: C.ink, fontSize: 26, fontWeight: "900", letterSpacing: -0.8 },
+  planValue: { color: C.ink, fontSize: 26, fontFamily: F.display, letterSpacing: 0 },
   planLabel: { color: C.inkSoft, fontSize: 13, fontWeight: "700" },
   planText: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
-  track: { height: 8, borderRadius: 8, overflow: "hidden", backgroundColor: "rgba(11,23,32,0.08)" },
+  track: { height: 8, borderRadius: 8, overflow: "hidden", backgroundColor: "rgba(43,46,48,0.1)" },
   trackFill: { height: "100%", borderRadius: 8, backgroundColor: C.ink },
 
   emptyButton: { alignSelf: "stretch", marginTop: 8 },

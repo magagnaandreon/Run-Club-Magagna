@@ -4,7 +4,7 @@ import * as ExpoLinking from "expo-linking";
 import Svg, { Polyline } from "react-native-svg";
 import { useRouter } from "expo-router";
 
-import { BackButton, C, CoachNote, Pill, PrimaryButton, Screen, SectionTitle } from "@/components/run-ui";
+import { BackButton, C, CoachNote, Pill, PrimaryButton, Screen, SectionTitle, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 import { appWebUrl } from "@/constants/oauth";
 import { trpc } from "@/lib/trpc";
@@ -529,10 +529,10 @@ const styles = StyleSheet.create({
   historyBox: { gap: 10, marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.line },
   header: { marginBottom: 20 },
   eyebrow: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.55, marginBottom: 6 },
-  title: { color: C.ink, fontSize: 32, fontWeight: "900", letterSpacing: -1.1 },
+  title: { color: C.ink, fontSize: 32, fontFamily: F.display, letterSpacing: 0 },
   headerText: { color: C.muted, fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 8 },
   statusSpinner: { marginVertical: 26 },
-  connectionCard: { marginTop: 18, backgroundColor: C.white, borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 17, gap: 12 },
+  connectionCard: { marginTop: 18, backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 17, gap: 12 },
   connectionTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   connectedDate: { flex: 1, textAlign: "right", color: C.muted, fontSize: 10, fontWeight: "700" },
   connectionTitle: { color: C.ink, fontSize: 19, fontWeight: "900", letterSpacing: -0.35, marginTop: 2 },
@@ -545,12 +545,12 @@ const styles = StyleSheet.create({
   scopeNote: { color: C.muted, fontSize: 10, lineHeight: 15, fontWeight: "600" },
   disconnectButton: { minHeight: 46, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.line, borderRadius: 14, backgroundColor: C.paper, marginTop: 3 },
   disconnectText: { color: C.ink, fontSize: 12, fontWeight: "800" },
-  setupCard: { marginTop: 18, backgroundColor: C.white, borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 17, gap: 11 },
+  setupCard: { marginTop: 18, backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 17, gap: 11 },
   setupLabel: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 4 },
   callbackUri: { color: C.inkSoft, fontSize: 11, lineHeight: 16, padding: 10, borderRadius: 11, backgroundColor: C.paper, overflow: "hidden" },
   sectionGap: { height: 30 },
   listHeader: { marginBottom: 1 },
-  emptyCard: { padding: 18, borderRadius: 18, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  emptyCard: { padding: 18, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
   emptyTitle: { color: C.ink, fontSize: 15, fontWeight: "900" },
   emptyText: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600", marginTop: 5 },
   activityList: { gap: 10 },
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   activityTitleCopy: { flex: 1 },
   activityName: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
   activitySub: { color: C.muted, fontSize: 10, lineHeight: 15, fontWeight: "700", marginTop: 3 },
-  activityChevron: { width: 27, height: 27, borderRadius: 10, backgroundColor: C.lime, color: C.ink, textAlign: "center", textAlignVertical: "center", fontSize: 20, lineHeight: 27, fontWeight: "800" },
+  activityChevron: { width: 27, height: 27, borderRadius: 10, backgroundColor: C.lime, color: C.ink, textAlign: "center", textAlignVertical: "center", fontSize: 20, lineHeight: 27, fontFamily: F.displayBold },
   activityMetrics: { flexDirection: "row", alignItems: "center", gap: 7, marginTop: 13 },
   activityMetric: { color: C.ink, fontSize: 12, fontWeight: "900" },
   activityDot: { color: C.muted, fontSize: 13, fontWeight: "900" },

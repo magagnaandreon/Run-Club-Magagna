@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { C, Pill, PrimaryButton, Screen, SectionTitle } from "@/components/run-ui";
+import { C, F, HeaderStat, HeaderStats, Pill, PrimaryButton, Road, RoadHeader, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
 import { TrainingDashboard } from "@/components/training-dashboard";
 import { useAuth } from "@/hooks/use-auth";
 import { localToday } from "@/hooks/use-insights";
@@ -15,7 +15,7 @@ function greeting() {
   return hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
 }
 
-/** Date and greeting; the photo and brand live in the dark top bar. */
+/** Date and greeting on asphalt; the photo and brand live in the top bar right above. */
 function Header() {
   const { user } = useAuth();
   const profile = trpc.account.profile.useQuery(undefined, { enabled: Boolean(user) });
@@ -24,10 +24,9 @@ function Header() {
   const rawDate = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   const dateLabel = rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
   return (
-    <View style={styles.header}>
-      <Text style={styles.headerDate}>{dateLabel}</Text>
-      <Text style={styles.headerHello} numberOfLines={1}>{greeting()}, {firstName}</Text>
-    </View>
+    <RoadHeader eyebrow={dateLabel} title={`${greeting()}, ${firstName}`}>
+      {user?.role === "admin" ? null : <AthleteStats />}
+    </RoadHeader>
   );
 }
 
@@ -38,6 +37,20 @@ export default function TodayScreen() {
       <Header />
       {user?.role === "admin" ? <CoachToday /> : <AthleteToday />}
     </Screen>
+  );
+}
+
+function AthleteStats() {
+  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() });
+  const weekFrom = startOfWeek(localToday());
+  const week = (assignments.data ?? []).filter((assignment) => assignment.scheduledDate >= weekFrom && assignment.scheduledDate <= addDays(weekFrom, 6));
+  const next = assignments.data?.find((assignment) => assignment.status === "assigned");
+  if (!assignments.data) return null;
+  return (
+    <HeaderStats>
+      <HeaderStat value={`${week.filter((assignment) => assignment.status === "completed").length}/${week.length}`} label="treinos da semana" />
+      <HeaderStat value={next ? formatDay(next.scheduledDate) : "—"} label="próximo treino" />
+    </HeaderStats>
   );
 }
 
@@ -63,6 +76,22 @@ function AthleteToday() {
         </View>
         <Text style={styles.nextTitle}>{upcoming?.title || "Aguardando o próximo treino"}</Text>
         <Text style={styles.nextText}>{upcoming?.objective || "Quando o treinador enviar um treino, os detalhes aparecem aqui."}</Text>
+        {upcoming?.steps.length ? (
+          <View style={styles.road}>
+            <Road>
+              {upcoming.steps.map((step, index) => (
+                <RoadStep
+                  key={step.id}
+                  index={index}
+                  plate={stepPlate(step)}
+                  title={step.label}
+                  detail={step.instruction || undefined}
+                  pace={step.targetPaceSecondsPerKm ? formatPace(step.targetPaceSecondsPerKm) : undefined}
+                />
+              ))}
+            </Road>
+          </View>
+        ) : null}
         {upcoming ? (
           <View style={styles.nextMetrics}>
             <NextMetric icon="time-outline" value={stepMinutes ? `${Math.round(stepMinutes)} min` : "—"} />
@@ -166,33 +195,30 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
   gap: { height: 28 },
 
-  header: { paddingTop: 4, marginBottom: 18 },
-  headerDate: { color: C.muted, fontSize: 12, fontWeight: "700" },
-  headerHello: { color: C.ink, fontSize: 22, lineHeight: 27, fontWeight: "900", letterSpacing: -0.6 },
-
-  nextCard: { padding: 18, borderRadius: 24, backgroundColor: C.navy, boxShadow: "0px 16px 36px rgba(11, 23, 32, 0.2)" },
+  nextCard: { padding: 18, borderRadius: 14, backgroundColor: C.stone },
   nextTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  nextDate: { color: "rgba(255,255,255,0.65)", fontSize: 11, fontWeight: "800" },
-  nextTitle: { color: C.white, fontSize: 22, lineHeight: 27, fontWeight: "900", letterSpacing: -0.6, marginTop: 14 },
-  nextText: { color: "rgba(255,255,255,0.7)", fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 6 },
-  nextMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
-  nextMetric: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" },
-  nextMetricText: { color: C.white, fontSize: 12, fontWeight: "800" },
+  nextDate: { color: C.muted, fontFamily: F.textBold, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.6 },
+  nextTitle: { color: C.ink, fontSize: 30, lineHeight: 32, fontFamily: F.display, textTransform: "uppercase", marginTop: 12 },
+  nextText: { color: C.inkSoft, fontSize: 14, lineHeight: 20, fontFamily: F.text, marginTop: 4 },
+  road: { marginTop: 18 },
+  nextMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
+  nextMetric: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4, backgroundColor: C.asphalt },
+  nextMetricText: { color: C.road, fontFamily: F.displayBold, fontSize: 15, letterSpacing: 0.3 },
   planProgress: { marginTop: 18, gap: 8 },
   planProgressTop: { flexDirection: "row", justifyContent: "space-between" },
-  planProgressLabel: { color: "rgba(255,255,255,0.65)", fontSize: 12, fontWeight: "700" },
-  planProgressValue: { color: C.white, fontSize: 12, fontWeight: "900" },
-  track: { height: 8, borderRadius: 8, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.1)" },
-  trackFill: { height: "100%", borderRadius: 8, backgroundColor: C.lime },
-  nextButton: { marginTop: 16, minHeight: 48 },
+  planProgressLabel: { color: C.muted, fontFamily: F.textSemi, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.6 },
+  planProgressValue: { color: C.ink, fontFamily: F.displayBold, fontSize: 16 },
+  track: { height: 10, borderRadius: 3, overflow: "hidden", backgroundColor: C.stone },
+  trackFill: { height: "100%", borderRadius: 3, backgroundColor: C.limeDeep },
+  nextButton: { marginTop: 16 },
 
   coachGrid: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  coachTile: { flex: 1, gap: 4, padding: 12, borderRadius: 18, backgroundColor: C.white, boxShadow: "0px 8px 20px rgba(11, 23, 32, 0.07)" },
+  coachTile: { flex: 1, gap: 4, padding: 12, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 8px 20px rgba(30, 33, 35, 0.07)" },
   coachTileHot: { backgroundColor: C.lime },
-  coachValue: { color: C.ink, fontSize: 24, lineHeight: 28, fontWeight: "900", letterSpacing: -0.6, marginTop: 4 },
+  coachValue: { color: C.ink, fontSize: 24, lineHeight: 28, fontFamily: F.display, letterSpacing: 0, marginTop: 4 },
   coachLabel: { color: C.inkSoft, fontSize: 10, fontWeight: "800" },
 
-  actionCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 22, backgroundColor: C.sand },
+  actionCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 14, backgroundColor: C.sand },
   actionIcon: { width: 42, height: 42, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
   actionCopy: { flex: 1, gap: 2 },
   actionEyebrow: { color: C.inkSoft, fontSize: 9, fontWeight: "900", letterSpacing: 1.2 },
@@ -200,7 +226,7 @@ const styles = StyleSheet.create({
   actionText: { color: C.inkSoft, fontSize: 12, fontWeight: "600" },
 
   feed: { gap: 8 },
-  feedRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.white, borderWidth: 1, borderColor: "#ECEDE6" },
+  feedRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
   feedDot: { width: 10, height: 10, borderRadius: 5 },
   feedDotDone: { backgroundColor: C.limeDeep },
   feedDotOpen: { backgroundColor: C.coral },
