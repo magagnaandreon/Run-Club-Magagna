@@ -64,9 +64,9 @@ export default function OAuthCallback() {
 const styles = StyleSheet.create({
   content: { flex: 1, justifyContent: "center", paddingVertical: 28 },
   title: { color: C.ink, fontSize: 28, lineHeight: 32, fontFamily: F.display, letterSpacing: 0, marginTop: 24 },
-  copy: { color: C.muted, fontSize: 15, lineHeight: 22, fontWeight: "600", marginTop: 12 },
+  copy: { color: C.muted, fontSize: 15, lineHeight: 22, fontFamily: F.text, marginTop: 12 },
   spinner: { alignSelf: "flex-start", marginTop: 28 },
   button: { minHeight: 52, borderRadius: 17, backgroundColor: C.ink, alignItems: "center", justifyContent: "center", marginTop: 24 },
-  buttonText: { color: C.white, fontSize: 15, fontWeight: "800" },
+  buttonText: { color: C.white, fontSize: 15, fontFamily: F.textBold },
   pressed: { opacity: 0.76 },
 });

@@ -10,7 +10,7 @@ export type WeekDay = "done" | "planned" | "missed" | "free";
 const LABELS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
 
 /** Monday to Sunday as one line on the asphalt: lime up to today, today ringed, planned days hollow. */
-export function WeekLine({ weekFrom, today, days }: { weekFrom: string; today: string; days: WeekDay[] }) {
+export function WeekLine({ weekFrom, today, days, light = false }: { weekFrom: string; today: string; days: WeekDay[]; light?: boolean }) {
   const reduced = useReducedMotion();
   const todayIndex = Math.max(0, Math.min(6, Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${weekFrom}T12:00:00Z`)) / 86400000)));
   const target = todayIndex / 6;
@@ -26,24 +26,24 @@ export function WeekLine({ weekFrom, today, days }: { weekFrom: string; today: s
   const label = `Semana de segunda a domingo: ${doneCount} de ${plannedCount} treinos feitos, hoje é ${LABELS[todayIndex]}.`;
 
   return (
-    <View style={styles.wrap} accessible accessibilityRole="image" accessibilityLabel={label}>
+    <View style={[styles.wrap, light && styles.wrapLight]} accessible accessibilityRole="image" accessibilityLabel={label}>
       <View style={styles.lineRow} onLayout={(event) => setSpan(Math.max(0, event.nativeEvent.layout.width - DOT))}>
-        <View style={styles.track} />
-        <Animated.View style={[styles.fill, fill]} />
+        <View style={[styles.track, light && styles.trackLight]} />
+        <Animated.View style={[styles.fill, light && styles.fillLight, fill]} />
         <View style={styles.dots}>
           {days.map((day, index) => (
             <View key={index} style={styles.dotSlot}>
-              <View style={[styles.dot, index === todayIndex ? styles.dotToday : day === "done" ? styles.dotDone : day === "planned" ? styles.dotPlanned : day === "missed" ? styles.dotMissed : styles.dotFree]} />
+              <View style={[styles.dot, index === todayIndex ? (light ? styles.dotTodayLight : styles.dotToday) : day === "done" ? [styles.dotDone, light && styles.dotDoneLight] : day === "planned" ? (light ? styles.dotPlannedLight : styles.dotPlanned) : day === "missed" ? styles.dotMissed : (light ? styles.dotFreeLight : styles.dotFree)]} />
             </View>
           ))}
         </View>
       </View>
       <View style={styles.labels}>
         {LABELS.map((name, index) => (
-          <Text key={name} style={[styles.label, index === todayIndex && styles.labelToday]}>{index === todayIndex ? "hoje" : name}</Text>
+          <Text key={name} style={[styles.label, light && styles.labelLight, index === todayIndex && (light ? styles.labelTodayLight : styles.labelToday)]}>{index === todayIndex ? "hoje" : name}</Text>
         ))}
       </View>
-      <Text style={styles.date} accessibilityElementsHidden>{formatRange(weekFrom)}</Text>
+      <Text style={[styles.date, light && styles.labelLight]} accessibilityElementsHidden>{formatRange(weekFrom)}</Text>
     </View>
   );
 }
@@ -71,5 +71,14 @@ const styles = StyleSheet.create({
   labels: { flexDirection: "row", justifyContent: "space-between" },
   label: { width: 34, marginHorizontal: -8, textAlign: "center", color: C.onAsphaltMuted, fontFamily: F.text, fontSize: 12 },
   labelToday: { color: C.road, fontFamily: F.textBold },
+  wrapLight: { marginTop: 4 },
+  trackLight: { backgroundColor: C.stone, height: 4 },
+  fillLight: { backgroundColor: C.asphalt, height: 4 },
+  dotDoneLight: { borderWidth: 2, borderColor: C.asphalt },
+  dotTodayLight: { width: 18, height: 18, backgroundColor: C.road, borderWidth: 3, borderColor: C.cone },
+  dotPlannedLight: { width: 14, height: 14, backgroundColor: C.road, borderWidth: 2, borderColor: "#9EA19C" },
+  dotFreeLight: { width: 10, height: 10, backgroundColor: C.stone },
+  labelLight: { color: C.muted },
+  labelTodayLight: { color: C.cone, fontFamily: F.textBold },
   date: { color: C.onAsphaltMuted, fontFamily: F.text, fontSize: 12, marginTop: 2 },
 });

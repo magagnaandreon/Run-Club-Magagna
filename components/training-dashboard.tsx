@@ -100,7 +100,6 @@ export function TrainingDashboard({ enabled = true, showRecent = true, aside, ti
 
   const weekCard = (
     <View style={styles.weekCard}>
-      <View style={styles.weekGlow} />
       <View style={styles.weekHeader}>
         <View>
           <Text style={styles.weekEyebrow}>FOCO · ESTA SEMANA · {shortDay(week.from)} – {shortDay(week.to)}</Text>
@@ -114,7 +113,7 @@ export function TrainingDashboard({ enabled = true, showRecent = true, aside, ti
           </Text>
         </View>
         <View style={styles.streak}>
-          <Ionicons name="flame" size={16} color={C.ink} />
+          <Ionicons name="flame" size={16} color={C.lime} />
           <Text style={styles.streakValue}>{week.streakDays}</Text>
           <Text style={styles.streakLabel}>{week.streakDays === 1 ? "dia" : "dias"}</Text>
         </View>
@@ -215,7 +214,7 @@ function WeekMetric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  kindNote: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
+  kindNote: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontFamily: F.text },
   pressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
   stack: { gap: 14 },
   skeletonRow: { flexDirection: "row", gap: 10 },
@@ -227,33 +226,32 @@ const styles = StyleSheet.create({
   main: { flex: 1.35, minWidth: 0 },
   side: { flex: 1, minWidth: 0 },
 
-  stravaBanner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, marginBottom: 16, borderRadius: 12, backgroundColor: "#FFF1EA", borderWidth: 1, borderColor: "#FFD6C2" },
+  stravaBanner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, marginBottom: 16, borderRadius: 14, backgroundColor: C.road },
   stravaDot: { width: 34, height: 34, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: STRAVA_ORANGE },
   bannerCopy: { flex: 1, gap: 2 },
-  bannerTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
-  bannerText: { color: C.inkSoft, fontSize: 12, fontWeight: "600" },
-  warning: { color: "#8A2A12", fontSize: 12, fontWeight: "700", marginBottom: 12 },
+  bannerTitle: { color: C.ink, fontSize: 14, fontFamily: F.textBold },
+  bannerText: { color: C.inkSoft, fontSize: 12, fontFamily: F.text },
+  warning: { color: "#8A2A12", fontSize: 12, fontFamily: F.textSemi, marginBottom: 12 },
 
-  periodCaption: { color: C.muted, fontSize: 12, fontWeight: "700", marginTop: 10, marginBottom: 12 },
-  periodChart: { padding: 16, marginBottom: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
-  periodChartTitle: { color: C.ink, fontSize: 13, fontWeight: "900", marginBottom: 6 },
+  periodCaption: { color: C.muted, fontSize: 12, fontFamily: F.textSemi, marginTop: 10, marginBottom: 12 },
+  periodChart: { padding: 16, marginBottom: 16, borderRadius: 14, backgroundColor: C.road },
+  periodChartTitle: { color: C.ink, fontSize: 13, fontFamily: F.textBold, marginBottom: 6 },
 
-  weekCard: { overflow: "hidden", padding: 18, borderRadius: 14, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(30, 33, 35, 0.22)" },
-  weekGlow: { position: "absolute", width: 240, height: 240, borderRadius: 120, right: -90, top: -110, backgroundColor: C.asphaltSoft },
+  weekCard: { overflow: "hidden", padding: 18, borderRadius: 14, backgroundColor: C.asphalt },
   weekHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
-  weekEyebrow: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.3, marginBottom: 6 },
+  weekEyebrow: { color: C.onAsphaltMuted, fontSize: 12, fontFamily: F.textBold, letterSpacing: 1, marginBottom: 6 },
   weekValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  weekValue: { color: C.white, fontSize: 34, lineHeight: 38, fontFamily: F.display, letterSpacing: 0 },
-  weekUnit: { color: "rgba(255,255,255,0.6)", fontSize: 16, fontWeight: "800", marginTop: 12, marginRight: 4 },
-  weekCompare: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600", marginTop: 2 },
-  streak: { alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: C.lime },
-  streakValue: { color: C.ink, fontSize: 20, lineHeight: 22, fontFamily: F.display, marginTop: 2 },
-  streakLabel: { color: C.ink, fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
+  weekValue: { color: C.lime, fontSize: 40, lineHeight: 42, fontFamily: F.display, letterSpacing: 0 },
+  weekUnit: { color: "rgba(255,255,255,0.6)", fontSize: 16, fontFamily: F.textBold, marginTop: 12, marginRight: 4 },
+  weekCompare: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: F.text, marginTop: 2 },
+  streak: { alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: C.asphaltSoft },
+  streakValue: { color: C.road, fontSize: 20, lineHeight: 22, fontFamily: F.display, marginTop: 2 },
+  streakLabel: { color: C.onAsphaltMuted, fontSize: 12, fontFamily: F.text },
   weekMetrics: { flexDirection: "row", alignItems: "center", marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" },
   weekMetric: { flex: 1, alignItems: "center", gap: 3 },
-  weekMetricValue: { color: C.white, fontSize: 16, fontWeight: "900" },
-  weekMetricLabel: { color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: "700" },
+  weekMetricValue: { color: C.white, fontSize: 16, fontFamily: F.textBold },
+  weekMetricLabel: { color: "rgba(255,255,255,0.55)", fontSize: 11, fontFamily: F.textSemi },
   weekDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.12)" },
 
-  footnote: { color: C.muted, fontSize: 11, fontWeight: "600", marginTop: 12 },
+  footnote: { color: C.muted, fontSize: 12, fontFamily: F.text, marginTop: 12 },
 });

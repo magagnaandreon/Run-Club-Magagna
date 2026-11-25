@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { DateChips, EmptyState, KindBadge, Segmented, SourceBadge, STRAVA_ORANGE, formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { AppHeader, C, CoachMessage, CoachNote, Pill, PulseDot, Road, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
+import { AppHeader, C, CoachMessage, CoachNote, Pill, PulseDot, Road, RoadStep, Screen, SectionTitle, stepPlate, F } from "@/components/run-ui";
 import { RunFinish } from "@/components/run-finish";
 import { CoachAthletes } from "@/components/coach-athletes";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -216,7 +216,7 @@ function AthleteClub() {
               state={completed ? "done" : "next"}
               plate={stepPlate(step)}
               title={step.label}
-              detail={[step.durationSeconds ? `${Math.round(step.durationSeconds / 60)} min` : "", step.distanceMeters ? `${formatKm(step.distanceMeters)} km` : "", step.instruction ?? ""].filter(Boolean).join(" · ")}
+              detail={[step.durationSeconds ? `${Math.round(step.durationSeconds / 60)} min` : step.distanceMeters ? `${formatKm(step.distanceMeters)} km` : "", step.instruction ?? ""].filter(Boolean).join(" · ")}
               pace={step.targetPaceSecondsPerKm ? formatPace(step.targetPaceSecondsPerKm) : undefined}
             />
           ))}
@@ -326,54 +326,54 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", alignItems: "center", gap: 6 },
   waiting: { flexDirection: "row", alignItems: "center", gap: 8 },
   linkedRun: { alignItems: "flex-end", paddingTop: 8 },
-  linkAction: { color: C.ink, fontSize: 12, fontWeight: "900", textDecorationLine: "underline" },
+  linkAction: { color: C.cone, fontSize: 14, fontFamily: F.textBold },
   runChoice: { flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: 12, backgroundColor: C.white },
   tabGap: { height: 18 },
   list: { gap: 10 },
-  helper: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600", marginBottom: 10 },
-  formSection: { color: C.ink, fontSize: 15, fontWeight: "900" },
-  approveText: { color: "#FFFFFF", fontSize: 12, fontWeight: "900" },
-  athleteRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(30, 33, 35, 0.06)" },
+  helper: { color: C.muted, fontSize: 12, lineHeight: 17, fontFamily: F.text, marginBottom: 10 },
+  formSection: { color: C.ink, fontSize: 15, fontFamily: F.textBold },
+  approveText: { color: "#FFFFFF", fontSize: 15, fontFamily: F.displayBold, letterSpacing: 1, textTransform: "uppercase" },
+  athleteRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, backgroundColor: C.road },
   activityOpen: { borderColor: "#F6C4B5" },
-  activityTitle: { color: C.ink, fontSize: 17, lineHeight: 22, fontWeight: "900", letterSpacing: -0.3 },
+  activityTitle: { color: C.ink, fontSize: 26, lineHeight: 28, fontFamily: F.display, textTransform: "uppercase" },
   metricChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   metricChip: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, backgroundColor: C.paper },
-  metricChipText: { color: C.inkSoft, fontSize: 11, fontWeight: "800" },
+  metricChipText: { color: C.inkSoft, fontSize: 12, fontFamily: F.textBold },
   effortChoice: { flexGrow: 1, alignItems: "center" },
-  workoutOpen: { borderColor: C.ink },
-  logBox: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: C.paper },
+  workoutOpen: {},
+  logBox: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.concrete },
   stravaIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: STRAVA_ORANGE },
-  requestCard: { minHeight: 71, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, marginBottom: 9, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 6px 16px rgba(30, 33, 35, 0.06)" },
+  requestCard: { minHeight: 71, flexDirection: "row", alignItems: "center", gap: 10, padding: 14, marginBottom: 9, borderRadius: 14, backgroundColor: C.road },
   flexCopy: { flex: 1, gap: 3 },
-  cardTitle: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
-  cardDetail: { color: C.muted, fontSize: 11, lineHeight: 16, fontWeight: "600" },
-  approveButton: { height: 38, flexDirection: "row", gap: 4, paddingHorizontal: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.cone },
-  rejectButton: { width: 38, height: 38, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: C.stone },
+  cardTitle: { color: C.ink, fontSize: 16, lineHeight: 21, fontFamily: F.textBold },
+  cardDetail: { color: C.muted, fontSize: 13, lineHeight: 18, fontFamily: F.text },
+  approveButton: { height: 40, flexDirection: "row", gap: 4, paddingHorizontal: 14, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.cone },
+  rejectButton: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.stone },
   pressed: { opacity: 0.72 },
-  formCard: { padding: 18, borderRadius: 14, backgroundColor: C.white, gap: 9, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
-  formLabel: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 9 },
-  input: { minHeight: 46, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, color: C.ink, backgroundColor: C.paper, fontSize: 13, fontWeight: "600" },
+  formCard: { padding: 18, borderRadius: 14, backgroundColor: C.road, gap: 9 },
+  formLabel: { color: C.ink, fontSize: 12, fontFamily: F.textBold, marginTop: 9 },
+  input: { minHeight: 48, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: C.ink, backgroundColor: C.concrete, fontSize: 15, fontFamily: F.text },
   choiceWrap: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 3 },
-  choice: { minHeight: 35, justifyContent: "center", paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper },
-  choiceSelected: { borderColor: C.ink, backgroundColor: C.ink },
-  choiceText: { color: C.ink, fontSize: 11, fontWeight: "800" },
+  choice: { minHeight: 38, justifyContent: "center", paddingHorizontal: 14, borderRadius: 19, borderWidth: 1, borderColor: "#B9BCB6", backgroundColor: "transparent" },
+  choiceSelected: { borderColor: C.asphalt, backgroundColor: C.asphalt },
+  choiceText: { color: C.inkSoft, fontSize: 14, fontFamily: F.textSemi },
   choiceTextSelected: { color: C.white },
-  primaryButton: { minHeight: 49, borderRadius: 15, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", marginTop: 8, paddingHorizontal: 12 },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
+  primaryButton: { minHeight: 50, borderRadius: 12, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", marginTop: 8, paddingHorizontal: 12 },
+  primaryButtonText: { color: "#FFFFFF", fontSize: 18, fontFamily: F.displayBold, letterSpacing: 1.5, textTransform: "uppercase" },
   disabled: { opacity: 0.6 },
-  activityCard: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 10, gap: 10 },
+  activityCard: { padding: 16, borderRadius: 14, backgroundColor: C.road, marginBottom: 10, gap: 10 },
   activityTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   athleteIdentity: { flexDirection: "row", alignItems: "center", gap: 7, flexShrink: 1 },
-  athleteNote: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
+  athleteNote: { color: C.coneInk, backgroundColor: C.coneTint, borderRadius: 12, padding: 12, fontSize: 14, lineHeight: 20, fontFamily: F.text },
   reviewInput: { minHeight: 72, textAlignVertical: "top", marginTop: 4 },
-  reviewed: { padding: 12, borderRadius: 14, backgroundColor: C.sky, gap: 4 },
-  reviewedTitle: { color: C.ink, fontSize: 11, fontWeight: "900" },
-  notice: { color: C.inkSoft, backgroundColor: C.sky, padding: 11, borderRadius: 13, marginBottom: 12, fontSize: 12, lineHeight: 17, fontWeight: "700" },
+  reviewed: { padding: 12, borderRadius: 12, backgroundColor: C.coneTint, gap: 4 },
+  reviewedTitle: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
+  notice: { color: C.inkSoft, backgroundColor: C.stone, padding: 12, borderRadius: 12, marginBottom: 12, fontSize: 14, lineHeight: 19, fontFamily: F.text },
   errorCard: { padding: 13, backgroundColor: "#F9D5CC", borderRadius: 14, marginBottom: 13 },
-  errorText: { color: "#762E21", fontSize: 12, lineHeight: 17, fontWeight: "700" },
-  athleteWorkout: { padding: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", gap: 10 },
+  errorText: { color: "#762E21", fontSize: 12, lineHeight: 17, fontFamily: F.textSemi },
+  athleteWorkout: { padding: 18, borderRadius: 14, backgroundColor: C.road, gap: 10 },
   stepsRoad: { marginTop: 14 },
-  stepLabel: { color: C.ink, fontSize: 12, fontWeight: "900" },
+  stepLabel: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
   metricsInputRow: { flexDirection: "row", gap: 9 },
   metricInput: { flex: 1 },
 });

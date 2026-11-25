@@ -1,15 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { inferRouterOutputs } from "@trpc/server";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { formatDay, formatKm, formatPace } from "@/components/dashboard-ui";
-import { C, F, HeaderStat, PulseDot, HeaderStats, Pill, PrimaryButton, Road, RoadHeader, RoadStep, Screen, SectionTitle, stepPlate } from "@/components/run-ui";
+import { NextAchievement } from "@/components/achievements";
+import { formatDay, formatKm, formatPace, TrainingRow } from "@/components/dashboard-ui";
+import { ChartCard, WeekKmBars } from "@/components/run-charts";
+import { C, CoachMessage, F, HeaderStat, HeaderStats, PrimaryButton, PulseDot, RoadHeader, Screen, SectionTitle, Settle } from "@/components/run-ui";
 import { TrainingDashboard } from "@/components/training-dashboard";
 import { WeekLine, type WeekDay } from "@/components/week-line";
 import { useAuth } from "@/hooks/use-auth";
-import { localToday } from "@/hooks/use-insights";
+import { localToday, useInsights } from "@/hooks/use-insights";
+import { useIsDesktop } from "@/hooks/use-layout";
 import { trpc } from "@/lib/trpc";
-import { addDays, startOfWeek } from "@/shared/insights";
+import type { AppRouter } from "@/server/routers";
+import { addDays, paceSecondsPerKm, startOfWeek } from "@/shared/insights";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -22,11 +27,10 @@ function Header() {
   const profile = trpc.account.profile.useQuery(undefined, { enabled: Boolean(user) });
   const name = profile.data?.name || user?.name || "";
   const firstName = name.split(" ")[0] || "corredor";
-  const rawDate = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-  const dateLabel = rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
+  const dateLabel = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   return (
     <RoadHeader eyebrow={dateLabel} title={`${greeting()}, ${firstName}`}>
-      {user?.role === "admin" ? null : <AthleteStats />}
+      {user?.role === "admin" ? <CoachStats /> : <AthleteStats />}
     </RoadHeader>
   );
 }
@@ -41,13 +45,12 @@ export default function TodayScreen() {
   );
 }
 
-function AthleteStats() {
-  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() });
-  const weekFrom = startOfWeek(localToday());
-  const week = (assignments.data ?? []).filter((assignment) => assignment.scheduledDate >= weekFrom && assignment.scheduledDate <= addDays(weekFrom, 6));
-  const next = assignments.data?.find((assignment) => assignment.status === "assigned");
-  if (!assignments.data) return null;
+/** This Monday-to-Sunday week from the coach's plan: what each day is, and how many are done. */
+function useWeekPlan() {
   const today = localToday();
+  const assignments = trpc.club.myAssignments.useQuery({ today });
+  const weekFrom = startOfWeek(today);
+  const week = (assignments.data ?? []).filter((assignment) => assignment.scheduledDate >= weekFrom && assignment.scheduledDate <= addDays(weekFrom, 6));
   const days: WeekDay[] = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekFrom, index);
     const planned = week.filter((assignment) => assignment.scheduledDate === date);
@@ -55,95 +58,167 @@ function AthleteStats() {
     if (planned.some((assignment) => assignment.status === "completed")) return "done";
     return date < today ? "missed" : "planned";
   });
+  return { assignments, week, days, weekFrom, today, done: week.filter((assignment) => assignment.status === "completed").length };
+}
+
+function AthleteStats() {
+  const desktop = useIsDesktop();
+  const insights = useInsights(true);
+  const { assignments, week, days, weekFrom, today, done } = useWeekPlan();
+  if (!assignments.data) return null;
+  const streak = insights.data?.week.streakDays ?? 0;
   return (
     <>
+      {desktop ? <WeekLine weekFrom={weekFrom} today={today} days={days} /> : null}
       <HeaderStats>
-        <HeaderStat value={`${week.filter((assignment) => assignment.status === "completed").length} de ${week.length}`} label="treinos da semana" />
-        <HeaderStat value={next ? formatDay(next.scheduledDate) : "—"} label="próximo treino" />
+        <HeaderStat accent value={insights.data ? `${formatKm(insights.data.week.distanceMeters)} km` : "—"} label="na semana" />
+        <HeaderStat value={week.length ? `${done} de ${week.length}` : "0"} label={week.length ? "treinos feitos" : "treinos marcados"} />
+        {desktop ? <HeaderStat value={`${streak} ${streak === 1 ? "dia" : "dias"}`} label="seguidos correndo" /> : null}
       </HeaderStats>
-      <WeekLine weekFrom={weekFrom} today={today} days={days} />
     </>
   );
 }
 
 function AthleteToday() {
   const router = useRouter();
-  const assignments = trpc.club.myAssignments.useQuery({ today: localToday() });
-  const upcoming = assignments.data?.find((assignment) => assignment.status === "assigned");
-  // The plan of this calendar week, Monday to Sunday.
-  const weekFrom = startOfWeek(localToday());
-  const weekTo = addDays(weekFrom, 6);
-  const weekAssignments = (assignments.data ?? []).filter((assignment) => assignment.scheduledDate >= weekFrom && assignment.scheduledDate <= weekTo);
-  const weekCompleted = weekAssignments.filter((assignment) => assignment.status === "completed").length;
-  const stepMinutes = (upcoming?.steps ?? []).reduce((total, step) => total + (step.durationSeconds ?? 0), 0) / 60;
-  const stepDistance = (upcoming?.steps ?? []).reduce((total, step) => total + (step.distanceMeters ?? 0), 0);
-  const pace = upcoming?.steps.find((step) => step.targetPaceSecondsPerKm)?.targetPaceSecondsPerKm ?? null;
+  const desktop = useIsDesktop();
+  const weeks = useInsights(true, "12w");
+  const { assignments, days, weekFrom, today } = useWeekPlan();
+  // Today or the next date first; an old workout left undone only when nothing is ahead.
+  const pending = (assignments.data ?? []).filter((assignment) => assignment.status === "assigned");
+  const upcoming = pending.find((assignment) => assignment.scheduledDate >= today) ?? pending[pending.length - 1];
+  const recent = weeks.data?.recent ?? [];
+  const series = (weeks.data?.series ?? []).slice(-6);
 
-  const nextCard = (
-    <>
-      <View style={styles.nextCard}>
-        <View style={styles.nextTop}>
-          <Pill label={upcoming ? "PRÓXIMO TREINO" : "SUA AGENDA"} tone="lime" icon="flash" />
-          {upcoming ? <Text style={styles.nextDate}>{formatDay(upcoming.scheduledDate)}</Text> : null}
-        </View>
-        <Text style={styles.nextTitle}>{upcoming?.title || "Aguardando o próximo treino"}</Text>
-        <Text style={styles.nextText}>{upcoming?.objective || "Quando o treinador enviar um treino, os detalhes aparecem aqui."}</Text>
-        {upcoming?.steps.length ? (
-          <View style={styles.road}>
-            <Road>
-              {upcoming.steps.map((step, index) => (
-                <RoadStep
-                  key={step.id}
-                  index={index}
-                  plate={stepPlate(step)}
-                  title={step.label}
-                  detail={step.instruction || undefined}
-                  pace={step.targetPaceSecondsPerKm ? formatPace(step.targetPaceSecondsPerKm) : undefined}
-                />
-              ))}
-            </Road>
-          </View>
-        ) : null}
-        {upcoming ? (
-          <View style={styles.nextMetrics}>
-            <NextMetric icon="time-outline" value={stepMinutes ? `${Math.round(stepMinutes)} min` : "—"} />
-            <NextMetric icon="map-outline" value={stepDistance ? `${formatKm(stepDistance)} km` : "—"} />
-            <NextMetric icon="speedometer-outline" value={pace ? `${formatPace(pace)} /km` : "livre"} />
-            <NextMetric icon="list-outline" value={`${upcoming.steps.length} etapas`} />
-          </View>
-        ) : null}
-        {weekAssignments.length ? (
-          <View style={styles.planProgress}>
-            <View style={styles.planProgressTop}>
-              <Text style={styles.planProgressLabel}>Plano da semana</Text>
-              <Text style={styles.planProgressValue}>{weekCompleted}/{weekAssignments.length} feitos</Text>
-            </View>
-            <View style={styles.track}><View style={[styles.trackFill, { width: `${Math.round((weekCompleted / weekAssignments.length) * 100)}%` }]} /></View>
-          </View>
-        ) : null}
-        <PrimaryButton label={upcoming ? "Abrir meu treino" : "Ver meu clube"} icon="arrow-forward" onPress={() => router.push("/(tabs)/club")} style={styles.nextButton} />
-      </View>
-    </>
+  const weekCard = (
+    <Settle index={0} style={styles.card}>
+      <Text style={styles.cardTitle}>Sua semana</Text>
+      <WeekLine light weekFrom={weekFrom} today={today} days={days} />
+    </Settle>
   );
 
-  return <TrainingDashboard title="Seu painel" aside={nextCard} />;
+  const nextCard = <NextWorkout assignment={upcoming} loading={!assignments.data} onOpen={() => router.push("/(tabs)/club")} />;
+  const note = upcoming?.description ? <Settle index={2}><CoachMessage label="Recado do treinador">{upcoming.description}</CoachMessage></Settle> : null;
+
+  const kmCard = series.length ? (
+    <Settle index={3}>
+      <ChartCard title="Km por semana" value={undefined} caption="A barra verde é a semana atual. O tracejado mostra quanto falta para igualar sua melhor semana.">
+        <WeekKmBars weeks={series} height={desktop ? 150 : 104} />
+      </ChartCard>
+    </Settle>
+  ) : null;
+
+  const runs = recent.length ? (
+    <View style={styles.runs}>
+      <SectionTitle title="Corridas da semana" action="Dados" onPress={() => router.push("/(tabs)/progress")} />
+      {recent.slice(0, 4).map((entry) => (
+        <TrainingRow
+          key={entry.id}
+          title={entry.workoutTitle ?? entry.title}
+          workout={Boolean(entry.workoutTitle)}
+          date={entry.date}
+          source={entry.source}
+          distanceMeters={entry.distanceMeters}
+          movingSeconds={entry.movingSeconds}
+          paceSecondsPerKm={paceSecondsPerKm(entry.distanceMeters, entry.movingSeconds)}
+        />
+      ))}
+    </View>
+  ) : null;
+
+  const strava = weeks.data && !weeks.data.stravaConnected ? (
+    <Pressable onPress={() => router.push("/strava")} style={({ pressed }) => [styles.strava, pressed && styles.pressed]}>
+      <View style={styles.actionCopy}>
+        <Text style={styles.stravaTitle}>Conecte seu Strava</Text>
+        <Text style={styles.stravaText}>As corridas entram sozinhas e concluem o treino do dia.</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={C.cone} />
+    </Pressable>
+  ) : null;
+
+  if (desktop) {
+    return (
+      <View style={styles.split}>
+        <View style={styles.main}>{kmCard}{runs}</View>
+        <View style={styles.side}>{nextCard}{note}{strava}<NextAchievement /></View>
+      </View>
+    );
+  }
+  return <View style={styles.stack}>{weekCard}{nextCard}{note}{strava}{kmCard}{runs}</View>;
 }
 
-function NextMetric({ icon, value }: { icon: "time-outline" | "map-outline" | "speedometer-outline" | "list-outline"; value: string }) {
+type Assignment = inferRouterOutputs<AppRouter>["club"]["myAssignments"][number];
+
+/** The next workout: name, an intensity strip (hard steps in conhaque), the numbers and the way in. */
+function NextWorkout({ assignment, loading, onOpen }: { assignment?: Assignment; loading: boolean; onOpen: () => void }) {
+  const desktop = useIsDesktop();
+  if (loading) return <View style={[styles.next, styles.nextLoading]} />;
+  if (!assignment) {
+    return (
+      <Settle index={1} style={styles.next}>
+        <Text style={styles.nextEyebrow}>SUA AGENDA</Text>
+        <Text style={styles.nextTitle}>Aguardando o próximo treino</Text>
+        <Text style={styles.nextText}>Quando o treinador enviar um treino, ele aparece aqui.</Text>
+        <PrimaryButton label="Ver meu clube" onPress={onOpen} style={styles.nextButton} />
+      </Settle>
+    );
+  }
+  const steps = assignment.steps;
+  const minutes = steps.reduce((total, step) => total + (step.durationSeconds ?? 0), 0) / 60;
+  const meters = steps.reduce((total, step) => total + (step.distanceMeters ?? 0), 0);
+  const pace = steps.find((step) => step.targetPaceSecondsPerKm)?.targetPaceSecondsPerKm ?? null;
+  const when = assignment.scheduledDate === localToday() ? "HOJE" : formatDay(assignment.scheduledDate).toUpperCase();
+  const facts = [meters ? `${formatKm(meters)} km` : null, minutes ? `${Math.round(minutes)} min` : null, pace ? `alvo ${formatPace(pace)}/km` : null, `${steps.length} ${steps.length === 1 ? "etapa" : "etapas"}`].filter(Boolean);
   return (
-    <View style={styles.nextMetric}>
-      <Ionicons name={icon} size={14} color={C.lime} />
-      <Text style={styles.nextMetricText}>{value}</Text>
-    </View>
+    <Settle index={1} style={styles.next}>
+      <Text style={styles.nextEyebrow}>PRÓXIMO TREINO · {when}</Text>
+      <Text style={[styles.nextTitle, desktop && styles.nextTitleDesktop]}>{assignment.title}</Text>
+      {steps.length ? (
+        <View style={styles.strip} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {steps.map((step) => <View key={step.id} style={[styles.stripPart, { flex: stepWeight(step) }, step.targetPaceSecondsPerKm ? styles.stripHard : null]} />)}
+        </View>
+      ) : null}
+      <Text style={styles.nextFacts}>{facts.join("   ·   ")}</Text>
+      {desktop && steps.length ? (
+        <View style={styles.nextSteps}>
+          {steps.slice(0, 5).map((step) => (
+            <View key={step.id} style={styles.nextStep}>
+              <Text style={[styles.nextStepText, step.targetPaceSecondsPerKm ? styles.nextStepHard : null]} numberOfLines={1}>{step.label}</Text>
+              <Text style={[styles.nextStepText, step.targetPaceSecondsPerKm ? styles.nextStepHard : null]}>{step.targetPaceSecondsPerKm ? formatPace(step.targetPaceSecondsPerKm) : "livre"}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <PrimaryButton label="Ver treino" onPress={onOpen} style={styles.nextButton} />
+    </Settle>
+  );
+}
+
+/** How wide a step is on the strip: its minutes, or its distance at an easy 6 min/km. */
+function stepWeight(step: { durationSeconds: number | null; distanceMeters: number | null }) {
+  if (step.durationSeconds) return step.durationSeconds;
+  if (step.distanceMeters) return step.distanceMeters * 0.36;
+  return 120;
+}
+
+function CoachStats() {
+  const athletes = trpc.club.athletes.useQuery();
+  const pending = trpc.club.pendingAthletes.useQuery();
+  const feed = trpc.club.coachActivityFeed.useQuery();
+  const toReview = (feed.data ?? []).filter((entry) => !entry.review).length;
+  return (
+    <HeaderStats>
+      <HeaderStat value={String(athletes.data?.length ?? 0)} label="alunos" />
+      <HeaderStat accent={toReview > 0} value={String(toReview)} label="a avaliar" />
+      <HeaderStat value={String(pending.data?.length ?? 0)} label="pedidos" />
+    </HeaderStats>
   );
 }
 
 function CoachToday() {
   const router = useRouter();
   const pending = trpc.club.pendingAthletes.useQuery();
-  const athletes = trpc.club.athletes.useQuery();
   const feed = trpc.club.coachActivityFeed.useQuery();
-  const workouts = trpc.club.workouts.useQuery();
   const toReview = (feed.data ?? []).filter((entry) => !entry.review);
   const nextAction = pending.data?.length
     ? { icon: "person-add" as const, title: "Aprovar novos alunos", text: `${pending.data.length} ${pending.data.length === 1 ? "pedido aguarda" : "pedidos aguardam"} sua revisão.` }
@@ -153,21 +228,14 @@ function CoachToday() {
 
   const classBlock = (
     <>
-      <View style={styles.coachGrid}>
-        <CoachTile icon="people" value={athletes.data?.length ?? 0} label="alunos" onPress={() => router.push("/(tabs)/club")} />
-        <CoachTile icon="hourglass" value={pending.data?.length ?? 0} label="pedidos" hot={Boolean(pending.data?.length)} onPress={() => router.push("/(tabs)/club")} />
-        <CoachTile icon="star" value={toReview.length} label="para avaliar" hot={toReview.length > 0} onPress={() => router.push("/(tabs)/club")} />
-        <CoachTile icon="library" value={workouts.data?.length ?? 0} label="treinos" onPress={() => router.push("/(tabs)/plans")} />
-      </View>
-
       <Pressable onPress={() => router.push("/(tabs)/club")} style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}>
-        <View style={styles.actionIcon}><Ionicons name={nextAction.icon} size={20} color={C.ink} /></View>
+        <View style={styles.actionIcon}><Ionicons name={nextAction.icon} size={20} color="#FFFFFF" /></View>
         <View style={styles.actionCopy}>
           <Text style={styles.actionEyebrow}>PRÓXIMA AÇÃO</Text>
           <Text style={styles.actionTitle}>{nextAction.title}</Text>
           <Text style={styles.actionText}>{nextAction.text}</Text>
         </View>
-        <Ionicons name="arrow-forward" size={20} color={C.ink} />
+        <Ionicons name="arrow-forward" size={20} color={C.cone} />
       </Pressable>
 
       {feed.data?.length ? (
@@ -180,8 +248,13 @@ function CoachToday() {
                 {review ? <View style={[styles.feedDot, styles.feedDotDone]} /> : <PulseDot />}
                 <View style={styles.actionCopy}>
                   <Text style={styles.feedTitle} numberOfLines={1}>{athleteName || "Aluno"} · {activity.title}</Text>
-                  <Text style={styles.feedText}>{formatKm(activity.distanceMeters, 2)} km · {formatPace(activity.averagePaceSecondsPerKm)} /km · {review ? "avaliado" : "aguarda avaliação"}</Text>
+                  <Text style={styles.feedText}>{formatKm(activity.distanceMeters, 2)} km · {formatPace(activity.averagePaceSecondsPerKm)} /km{review ? " · avaliado" : ""}</Text>
                 </View>
+                {review ? null : (
+                  <Pressable accessibilityRole="button" accessibilityLabel={`Avaliar ${athleteName || "aluno"}`} onPress={() => router.push("/(tabs)/club")} style={({ pressed }) => [styles.review, pressed && styles.pressed]}>
+                    <Text style={styles.reviewText}>Avaliar</Text>
+                  </Pressable>
+                )}
               </View>
             ))}
           </View>
@@ -193,54 +266,52 @@ function CoachToday() {
   return <TrainingDashboard title="Seu treino" aside={classBlock} />;
 }
 
-function CoachTile({ icon, value, label, hot = false, onPress }: { icon: "people" | "hourglass" | "star" | "library"; value: number; label: string; hot?: boolean; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.coachTile, hot && styles.coachTileHot, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={16} color={C.ink} />
-      <Text style={styles.coachValue}>{value}</Text>
-      <Text style={styles.coachLabel}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
   gap: { height: 28 },
 
-  nextCard: { padding: 18, borderRadius: 14, backgroundColor: C.stone },
-  nextTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  nextDate: { color: C.muted, fontFamily: F.textBold, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.6 },
-  nextTitle: { color: C.ink, fontSize: 30, lineHeight: 32, fontFamily: F.display, textTransform: "uppercase", marginTop: 12 },
-  nextText: { color: C.inkSoft, fontSize: 14, lineHeight: 20, fontFamily: F.text, marginTop: 4 },
-  road: { marginTop: 18 },
-  nextMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  nextMetric: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4, backgroundColor: C.asphalt },
-  nextMetricText: { color: C.road, fontFamily: F.displayBold, fontSize: 15, letterSpacing: 0.3 },
-  planProgress: { marginTop: 18, gap: 8 },
-  planProgressTop: { flexDirection: "row", justifyContent: "space-between" },
-  planProgressLabel: { color: C.muted, fontFamily: F.textSemi, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.6 },
-  planProgressValue: { color: C.ink, fontFamily: F.displayBold, fontSize: 16 },
-  track: { height: 10, borderRadius: 3, overflow: "hidden", backgroundColor: C.stone },
-  trackFill: { height: "100%", borderRadius: 3, backgroundColor: C.limeDeep },
-  nextButton: { marginTop: 16 },
+  stack: { gap: 14 },
+  split: { flexDirection: "row", alignItems: "flex-start", gap: 24 },
+  main: { flex: 1.55, minWidth: 0, gap: 24 },
+  side: { flex: 1, minWidth: 0, gap: 20 },
+  card: { backgroundColor: C.road, borderRadius: 14, padding: 16, gap: 10 },
+  cardTitle: { color: C.inkSoft, fontFamily: F.displayBold, fontSize: 16, letterSpacing: 1, textTransform: "uppercase" },
+  runs: { gap: 8, marginTop: 10 },
 
-  coachGrid: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  coachTile: { flex: 1, gap: 4, padding: 12, borderRadius: 12, backgroundColor: C.white, boxShadow: "0px 8px 20px rgba(30, 33, 35, 0.07)" },
-  coachTileHot: { backgroundColor: C.lime },
-  coachValue: { color: C.ink, fontSize: 24, lineHeight: 28, fontFamily: F.display, letterSpacing: 0, marginTop: 4 },
-  coachLabel: { color: C.inkSoft, fontSize: 10, fontWeight: "800" },
+  next: { backgroundColor: C.stone, borderRadius: 14, padding: 18, gap: 10 },
+  nextLoading: { height: 210 },
+  nextEyebrow: { color: C.coneInk, fontFamily: F.textBold, fontSize: 12, letterSpacing: 1 },
+  nextTitle: { color: C.ink, fontFamily: F.display, fontSize: 28, lineHeight: 30, textTransform: "uppercase" },
+  nextTitleDesktop: { fontSize: 36, lineHeight: 38 },
+  nextText: { color: C.inkSoft, fontFamily: F.text, fontSize: 14, lineHeight: 20 },
+  strip: { flexDirection: "row", gap: 4 },
+  stripPart: { height: 8, borderRadius: 4, backgroundColor: "#9EA19C" },
+  stripHard: { backgroundColor: C.cone },
+  nextFacts: { color: C.inkSoft, fontFamily: F.text, fontSize: 14, ...{ fontVariant: ["tabular-nums"] } },
+  nextSteps: { gap: 8, marginTop: 2 },
+  nextStep: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+  nextStepText: { color: C.inkSoft, fontFamily: F.text, fontSize: 15 },
+  nextStepHard: { color: C.coneInk, fontFamily: F.textBold },
+  nextButton: { marginTop: 4, minHeight: 50 },
 
-  actionCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 14, backgroundColor: C.sand },
-  actionIcon: { width: 42, height: 42, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
+  strava: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: 14, backgroundColor: C.road },
+  stravaTitle: { color: C.ink, fontFamily: F.textBold, fontSize: 15 },
+  stravaText: { color: C.muted, fontFamily: F.text, fontSize: 13 },
+
+
+  actionCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 14, backgroundColor: C.stone },
+  actionIcon: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: C.cone },
   actionCopy: { flex: 1, gap: 2 },
-  actionEyebrow: { color: C.inkSoft, fontSize: 9, fontWeight: "900", letterSpacing: 1.2 },
-  actionTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
-  actionText: { color: C.inkSoft, fontSize: 12, fontWeight: "600" },
+  actionEyebrow: { color: C.coneInk, fontSize: 12, fontFamily: F.textBold, letterSpacing: 1 },
+  actionTitle: { color: C.ink, fontSize: 20, fontFamily: F.display, textTransform: "uppercase" },
+  actionText: { color: C.inkSoft, fontSize: 12, fontFamily: F.text },
 
   feed: { gap: 8 },
-  feedRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
+  feedRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, backgroundColor: C.road },
+  review: { height: 38, paddingHorizontal: 14, borderRadius: 10, justifyContent: "center", backgroundColor: C.cone },
+  reviewText: { color: "#FFFFFF", fontFamily: F.displayBold, fontSize: 15, letterSpacing: 1, textTransform: "uppercase" },
   feedDot: { width: 10, height: 10, borderRadius: 5 },
-  feedDotDone: { backgroundColor: C.limeDeep },
-  feedTitle: { color: C.ink, fontSize: 14, fontWeight: "800" },
-  feedText: { color: C.muted, fontSize: 12, fontWeight: "600" },
+  feedDotDone: { backgroundColor: "#9EA19C" },
+  feedTitle: { color: C.ink, fontSize: 16, fontFamily: F.textBold },
+  feedText: { color: C.muted, fontSize: 13, fontFamily: F.text },
 });

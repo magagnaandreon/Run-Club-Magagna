@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { AppHeader, C, Pill, Row, Screen, SectionTitle } from "@/components/run-ui";
+import { C, F, HeaderStat, HeaderStats, RoadHeader, Screen, SectionTitle } from "@/components/run-ui";
 import { Achievements } from "@/components/achievements";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useAuth } from "@/hooks/use-auth";
@@ -130,16 +130,26 @@ export default function ProfileScreen() {
   };
 
   return <Screen scroll>
-    <AppHeader eyebrow="Seu espaço" title="Perfil" />
-
-    <View style={styles.profileCard}>
-      <ProfileAvatar uri={avatarUrl} name={displayName} size={68} />
-      <View style={styles.profileCopy}><Text style={styles.name}>{displayName}</Text><Text style={styles.profileDetail}>{profile.data?.email || user?.email || "Conta autenticada"}</Text><Pill label={isCoach ? "TREINADOR" : "ALUNO APROVADO"} tone="lime" /></View>
-    </View>
-    <Pressable accessibilityRole="button" onPress={beginEdit} style={({ pressed }) => [styles.editLink, pressed && styles.pressed]}>
-      <Ionicons name="create-outline" size={18} color={C.ink} />
-      <Text style={styles.editLinkText}>Editar perfil</Text>
-    </Pressable>
+    <RoadHeader
+      leading={<ProfileAvatar uri={avatarUrl} name={displayName} size={68} />}
+      eyebrow={isCoach ? "treinador do clube" : "aluno do clube"}
+      title={displayName}
+      subtitle={profile.data?.email || user?.email || undefined}
+    >
+      <HeaderStats>
+        {isCoach ? (
+          <>
+            <HeaderStat accent value={String(athletes.data?.length ?? 0)} label="alunos aprovados" />
+            <HeaderStat value={String(pending.data?.length ?? 0)} label="pedidos pendentes" />
+          </>
+        ) : (
+          <>
+            <HeaderStat accent value={`${weekKm.toFixed(1).replace(".", ",")} km`} label="nesta semana" />
+            <HeaderStat value={String(thisWeek.length)} label={thisWeek.length === 1 ? "corrida na semana" : "corridas na semana"} />
+          </>
+        )}
+      </HeaderStats>
+    </RoadHeader>
 
     {editing ? <View style={styles.editCard}>
       <Text style={styles.editTitle}>Seu perfil, do seu jeito</Text>
@@ -164,57 +174,60 @@ export default function ProfileScreen() {
     </View> : notice ? <Text accessibilityLiveRegion="polite" style={styles.successNotice}>{notice}</Text> : null}
     {profile.error ? <Text style={styles.profileError}>Não foi possível atualizar os dados do perfil. Tente novamente.</Text> : null}
 
-    <View style={styles.gap} />
-    <SectionTitle title={isCoach ? "Sua turma" : "Seu momento"} />
-    <View style={styles.momentCard}>{isCoach ? <><View style={styles.momentItem}><Ionicons name="people-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{athletes.data?.length ?? 0}</Text><Text style={styles.momentLabel}>alunos aprovados</Text></View></View><View style={styles.momentLine} /><View style={styles.momentItem}><Ionicons name="hourglass-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{pending.data?.length ?? 0}</Text><Text style={styles.momentLabel}>pedidos pendentes</Text></View></View></> : <><View style={styles.momentItem}><Ionicons name="footsteps-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{weekKm.toFixed(1)} km</Text><Text style={styles.momentLabel}>registrados nesta semana</Text></View></View><View style={styles.momentLine} /><View style={styles.momentItem}><Ionicons name="flame-outline" size={21} color={C.ink} /><View><Text style={styles.momentValue}>{thisWeek.length}</Text><Text style={styles.momentLabel}>atividades registradas</Text></View></View></>}</View>
-
-    <View style={styles.gap} />
     {isCoach ? null : <Achievements />}
 
-    <SectionTitle title="Seu acompanhamento" />
-    <View style={styles.list}>
-      <Row icon={isCoach ? "people-outline" : "calendar-outline"} title={isCoach ? "Gestão de alunos e treinos" : "Agenda e avaliações"} detail={isCoach ? "Acesse a aba Alunos para aprovar, atribuir e avaliar." : "Acesse Meu clube para ver treinos enviados e comentários."} />
-      <Row icon="pulse-outline" title="Meu histórico Strava" detail={stravaStatus.data?.connected ? "Conta conectada. Consulte suas atividades privadas." : stravaStatus.data?.configured ? "Conecte sua conta para consultar seu histórico pessoal." : "Aguardando configuração do app Strava."} onPress={() => router.push("/strava")} />
-    </View>
     <View style={styles.gap} />
-    <Pressable onPress={signOut} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}><Ionicons name="log-out-outline" size={19} color={C.ink} /><Text style={styles.signOutText}>Sair da conta</Text></Pressable>
+    <SectionTitle title="Conta" />
+    <View style={styles.list}>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/strava")} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+        <Text style={styles.itemText}>Strava</Text>
+        <View style={styles.status}><View style={[styles.statusDot, stravaStatus.data?.connected && styles.statusOn]} /><Text style={styles.statusText}>{stravaStatus.data?.connected ? "conectado" : stravaStatus.data?.configured ? "conectar" : "indisponível"}</Text></View>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={beginEdit} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+        <Text style={styles.itemText}>Nome e foto</Text>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/club")} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+        <Text style={styles.itemText}>{isCoach ? "Alunos e treinos" : "Agenda e avaliações"}</Text>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={signOut} style={({ pressed }) => [styles.item, styles.itemLast, pressed && styles.pressed]}>
+        <Text style={styles.signOutText}>Sair da conta</Text>
+      </Pressable>
+    </View>
   </Screen>;
 }
 
 const styles = StyleSheet.create({
-  profileCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
-  profileCopy: { flex: 1, gap: 5 },
-  name: { color: C.ink, fontSize: 19, fontWeight: "900" },
-  profileDetail: { color: C.muted, fontSize: 12, fontWeight: "700" },
-  editLink: { alignSelf: "flex-start", minHeight: 42, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 8, marginTop: 5 },
-  editLinkText: { color: C.ink, fontSize: 13, fontWeight: "900" },
-  editCard: { padding: 18, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, marginTop: 8 },
-  editTitle: { color: C.ink, fontSize: 18, fontWeight: "900", marginBottom: 14 },
+  editCard: { padding: 18, borderRadius: 14, backgroundColor: C.road, marginBottom: 8 },
+  editTitle: { color: C.ink, fontSize: 22, fontFamily: F.display, textTransform: "uppercase", marginBottom: 14 },
   photoPreview: { alignItems: "center", marginBottom: 10 },
-  photoButton: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 7, minHeight: 42, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.sky },
-  photoButtonText: { color: C.ink, fontSize: 13, fontWeight: "800" },
-  formHint: { color: C.muted, fontSize: 11, lineHeight: 16, fontWeight: "600", marginTop: 8 },
-  formLabel: { color: C.ink, fontSize: 12, fontWeight: "900", marginTop: 16, marginBottom: 7 },
-  input: { minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 14, color: C.ink, fontSize: 14, fontWeight: "600" },
+  photoButton: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 7, minHeight: 42, paddingHorizontal: 14, borderRadius: 12, backgroundColor: C.stone },
+  photoButtonText: { color: C.ink, fontSize: 13, fontFamily: F.textBold },
+  formHint: { color: C.muted, fontSize: 12, lineHeight: 16, fontFamily: F.text, marginTop: 8 },
+  formLabel: { color: C.ink, fontSize: 12, fontFamily: F.textBold, marginTop: 16, marginBottom: 7 },
+  input: { minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 14, color: C.ink, fontSize: 14, fontFamily: F.text },
   readOnly: { minHeight: 46, justifyContent: "center", paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
-  readOnlyText: { color: C.muted, fontSize: 13, fontWeight: "700" },
-  notice: { color: "#A74736", fontSize: 12, lineHeight: 17, fontWeight: "700", marginTop: 11 },
-  successNotice: { color: C.inkSoft, fontSize: 12, fontWeight: "800", marginTop: 7, paddingHorizontal: 4 },
-  profileError: { color: "#A74736", fontSize: 12, fontWeight: "700", marginTop: 8 },
+  readOnlyText: { color: C.muted, fontSize: 13, fontFamily: F.textSemi },
+  notice: { color: "#A74736", fontSize: 12, lineHeight: 17, fontFamily: F.textSemi, marginTop: 11 },
+  successNotice: { color: C.inkSoft, fontSize: 12, fontFamily: F.textBold, marginTop: 7, paddingHorizontal: 4 },
+  profileError: { color: "#A74736", fontSize: 12, fontFamily: F.textSemi, marginTop: 8 },
   editActions: { flexDirection: "row", gap: 10, marginTop: 18 },
-  cancelButton: { flex: 1, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
-  cancelText: { color: C.ink, fontSize: 13, fontWeight: "800" },
-  saveButton: { flex: 1.3, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: C.cone },
-  saveText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
+  cancelButton: { flex: 1, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: C.stone },
+  cancelText: { color: C.ink, fontSize: 13, fontFamily: F.textBold },
+  saveButton: { flex: 1.3, minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: C.cone },
+  saveText: { color: "#FFFFFF", fontSize: 17, fontFamily: F.displayBold, letterSpacing: 1.2, textTransform: "uppercase" },
   disabled: { opacity: 0.55 },
-  gap: { height: 30 },
-  momentCard: { flexDirection: "row", alignItems: "center", padding: 17, borderRadius: 14, backgroundColor: C.sand },
-  momentItem: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
-  momentLine: { width: 1, height: 38, backgroundColor: "#D9CBB3", marginHorizontal: 10 },
-  momentValue: { color: C.ink, fontSize: 16, fontWeight: "900" },
-  momentLabel: { color: C.inkSoft, fontSize: 10, fontWeight: "700", marginTop: 2 },
-  list: { paddingHorizontal: 16, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
-  signOut: { minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, borderRadius: 16 },
-  signOutText: { color: C.ink, fontSize: 13, fontWeight: "800" },
+  gap: { height: 22 },
+  list: { borderRadius: 14, backgroundColor: C.road },
+  item: { minHeight: 54, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.line },
+  itemLast: { borderBottomWidth: 0 },
+  itemText: { flex: 1, color: C.ink, fontFamily: F.text, fontSize: 15 },
+  status: { flexDirection: "row", alignItems: "center", gap: 6 },
+  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#9EA19C" },
+  statusOn: { backgroundColor: "#3F7A12" },
+  statusText: { color: C.inkSoft, fontFamily: F.text, fontSize: 13 },
+  signOutText: { color: C.cone, fontFamily: F.textSemi, fontSize: 15 },
   pressed: { opacity: 0.72 },
 });

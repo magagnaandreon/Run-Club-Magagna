@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { C } from "@/components/run-ui";
+import { C, F } from "@/components/run-ui";
 import type { AiWorkout, StepKind } from "@/shared/coach-ai";
 
 export type WorkoutStepDraft = {
@@ -187,26 +187,26 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   disabled: { opacity: 0.3 },
   editor: { gap: 8 },
-  label: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 6 },
-  section: { color: C.ink, fontSize: 15, fontWeight: "900" },
-  muted: { color: C.muted, fontSize: 11, fontWeight: "700" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 12, paddingVertical: 9, color: C.ink, backgroundColor: C.white, fontSize: 13, fontWeight: "600" },
+  label: { color: C.ink, fontSize: 12, fontFamily: F.textBold, marginTop: 6 },
+  section: { color: C.ink, fontSize: 15, fontFamily: F.textBold },
+  muted: { color: C.muted, fontSize: 12, fontFamily: F.textSemi },
+  input: { minHeight: 44, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 12, paddingVertical: 9, color: C.ink, backgroundColor: C.white, fontSize: 13, fontFamily: F.text },
   multiline: { minHeight: 58, textAlignVertical: "top" },
   stepsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
-  step: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
+  step: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.paper },
   stepTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   stepNumber: { width: 26, height: 26, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: C.ink },
-  stepNumberText: { color: C.lime, fontSize: 12, fontWeight: "900" },
+  stepNumberText: { color: C.lime, fontSize: 12, fontFamily: F.textBold },
   stepTools: { flexDirection: "row", gap: 4 },
-  iconButton: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  iconButton: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.white },
   kinds: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  kind: { minHeight: 32, justifyContent: "center", paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
+  kind: { minHeight: 32, justifyContent: "center", paddingHorizontal: 11, borderRadius: 999, backgroundColor: C.white },
   kindOn: { borderColor: C.ink, backgroundColor: C.ink },
-  kindText: { color: C.ink, fontSize: 11, fontWeight: "800" },
+  kindText: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
   kindTextOn: { color: C.white },
   row: { flexDirection: "row", gap: 8 },
   field: { flex: 1, gap: 3 },
-  caption: { color: C.muted, fontSize: 10, fontWeight: "800" },
+  caption: { color: C.muted, fontSize: 11, fontFamily: F.textBold },
   quick: { gap: 6, marginTop: 4 },
   quickButton: { flexDirection: "row", alignItems: "center", gap: 4, minHeight: 34, paddingHorizontal: 11, borderRadius: 999, backgroundColor: C.lime },
 });

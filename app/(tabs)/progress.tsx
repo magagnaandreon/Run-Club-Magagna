@@ -4,12 +4,13 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { BarChart, DeltaChip, EmptyState, Explain, PeriodSelector, Skeleton, delta, formatDay, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
 import { RunAnalysisSection } from "@/components/run-analysis";
-import { AppHeader, C, PrimaryButton, ProgressRing, Screen, SectionTitle, F } from "@/components/run-ui";
+import { ChartCard, GoalTrack, PaceTrend, WeekKmBars } from "@/components/run-charts";
+import { AppHeader, C, PrimaryButton, ProgressRing, Screen, SectionTitle, F, NUM } from "@/components/run-ui";
 import { useAuth } from "@/hooks/use-auth";
 import { localToday, useInsights } from "@/hooks/use-insights";
 import { useIsDesktop } from "@/hooks/use-layout";
 import { trpc } from "@/lib/trpc";
-import { calendarWeeks, daysInRange } from "@/shared/insights";
+import { calendarWeeks, daysInRange, type InsightBucket } from "@/shared/insights";
 
 type RecordIcon = "trophy-outline" | "flash-outline" | "trending-up-outline" | "time-outline";
 
@@ -23,8 +24,9 @@ export default function ProgressScreen() {
   const coachFeed = trpc.club.coachActivityFeed.useQuery(undefined, { enabled: isCoach });
   const data = insights.data;
 
+  const weekly = useInsights(Boolean(user), "12w");
   const header = (
-    <AppHeader eyebrow={isCoach ? "Seu treino e a turma" : "Sua evolução"} title="Dados" />
+    <AppHeader eyebrow={isCoach ? "seu treino e a turma" : "sua evolução, semana a semana"} title="Seus dados" />
   );
 
   if (!data) {
@@ -48,31 +50,33 @@ export default function ProgressScreen() {
   return (
     <Screen scroll wide>
       {header}
+      <TrendCards weeks={weekly.data?.series ?? []} longest={weekly.data?.period.longestMeters ?? period.longestMeters} desktop={desktop} />
+
+      <View style={styles.gap} />
+      <SectionTitle title="Números do período" />
       <View style={desktop && styles.selectorDesktop}><PeriodSelector value={insights.period} onChange={insights.setPeriod} /></View>
       <Text style={styles.weekNote}>As semanas vão de segunda a domingo. A semana atual entra até hoje.</Text>
 
       <View style={desktop && styles.split}>
       <View style={[styles.hero, desktop && styles.heroDesktop]}>
         <View style={styles.heroTop}>
-          <View>
-            <Text style={styles.heroEyebrow}>DISTÂNCIA NO PERÍODO</Text>
-            <View style={styles.heroValueRow}>
-              <Text style={styles.heroValue}>{formatKm(period.distanceMeters)}</Text>
-              <Text style={styles.heroUnit}>km</Text>
-              <DeltaChip value={compared} inverse />
-            </View>
-            <Text style={styles.heroRange}>
-              {period.from ? `${formatDay(period.from)} – ${formatDay(currentWeek ? data.week.to : period.to)}` : "Sem corridas registradas ainda"}
-              {insights.isFetching ? " · atualizando…" : ""}
-            </Text>
-            {compared !== null ? <Text style={styles.heroRange}>A porcentagem compara com {currentWeek ? "a semana passada" : "o período anterior"} até o mesmo dia.</Text> : null}
+          <Text style={styles.heroEyebrow}>Distância no período</Text>
+          <View style={styles.heroValueRow}>
+            <Text style={styles.heroValue}>{formatKm(period.distanceMeters)}</Text>
+            <Text style={styles.heroUnit}>km</Text>
+            <DeltaChip value={compared} />
           </View>
+          <Text style={styles.heroRange}>
+            {period.from ? `${formatDay(period.from)} – ${formatDay(currentWeek ? data.week.to : period.to)}` : "Sem corridas registradas ainda"}
+            {insights.isFetching ? " · atualizando…" : ""}
+          </Text>
+          {compared !== null ? <Text style={styles.heroRange}>A porcentagem compara com {currentWeek ? "a semana passada" : "o período anterior"} até o mesmo dia.</Text> : null}
         </View>
-        <BarChart buckets={data.series} dark height={desktop ? 150 : 130} highlight={data.series.findIndex((bucket) => bucket.from <= period.to && period.to <= bucket.to)} />
+        <BarChart buckets={data.series} height={desktop ? 150 : 120} highlight={data.series.findIndex((bucket) => bucket.from <= period.to && period.to <= bucket.to)} />
         <View style={styles.heroMetrics}>
           <HeroMetric value={String(period.runs)} label="corridas" />
           <HeroMetric value={formatDuration(period.movingSeconds)} label="em movimento" />
-          <HeroMetric value={formatPace(period.averagePaceSecondsPerKm)} label="ritmo médio por km" />
+          <HeroMetric value={formatPace(period.averagePaceSecondsPerKm)} label="pace médio /km" />
         </View>
       </View>
 
@@ -82,10 +86,10 @@ export default function ProgressScreen() {
           <View style={desktop ? styles.gapNone : styles.gap} />
           <SectionTitle title="Destaques do período" />
           <View style={styles.records}>
-            <RecordCard icon="trophy-outline" label="Maior corrida" hint="A corrida mais longa." value={`${formatKm(period.longestMeters, 2)} km`} tone={C.sand} />
-            <RecordCard icon="flash-outline" label="Melhor ritmo" hint="Menor tempo por km em uma corrida de 1 km ou mais." value={`${formatPace(period.bestPaceSecondsPerKm)} /km`} tone={C.sky} />
-            <RecordCard icon="trending-up-outline" label="Subida acumulada" hint="Soma de todas as subidas das corridas." value={`${period.elevationMeters} m`} tone={C.sky} />
-            <RecordCard icon="time-outline" label="Média por corrida" hint="Distância típica de cada saída." value={`${formatKm(period.distanceMeters / Math.max(1, period.runs), 1)} km`} tone={C.sand} />
+            <RecordCard icon="trophy-outline" label="Maior corrida" hint="A corrida mais longa." value={`${formatKm(period.longestMeters, 2)} km`} />
+            <RecordCard icon="flash-outline" label="Melhor ritmo" hint="Menor tempo por km em uma corrida de 1 km ou mais." value={`${formatPace(period.bestPaceSecondsPerKm)} /km`} />
+            <RecordCard icon="trending-up-outline" label="Subida acumulada" hint="Soma de todas as subidas das corridas." value={`${period.elevationMeters} m`} />
+            <RecordCard icon="time-outline" label="Média por corrida" hint="Distância típica de cada saída." value={`${formatKm(period.distanceMeters / Math.max(1, period.runs), 1)} km`} />
           </View>
 
           <View style={styles.gap} />
@@ -154,6 +158,39 @@ export default function ProgressScreen() {
   );
 }
 
+const GOALS = [
+  { meters: 5000, name: "5 km" },
+  { meters: 10000, name: "10 km" },
+  { meters: 21097, name: "21 km" },
+  { meters: 42195, name: "42 km" },
+];
+
+/** The three trends of the approved design: pace line, km per week and the next distance goal. */
+function TrendCards({ weeks, longest, desktop }: { weeks: InsightBucket[]; longest: number; desktop: boolean }) {
+  const recent = weeks.slice(-6);
+  const paced = weeks.filter((week) => week.distanceMeters >= 500 && week.movingSeconds);
+  const lastPace = paced.length ? paced[paced.length - 1].movingSeconds! / (paced[paced.length - 1].distanceMeters / 1000) : null;
+  const firstPace = paced.length > 1 ? paced[0].movingSeconds! / (paced[0].distanceMeters / 1000) : null;
+  const gain = lastPace && firstPace ? Math.round(firstPace - lastPace) : 0;
+  const goal = GOALS.find((item) => longest < item.meters) ?? GOALS[GOALS.length - 1];
+  const share = Math.min(1, longest / goal.meters);
+  const paceCaption = gain > 5 ? `Mais rápido é a linha subindo: seu km está ${formatPace(gain)} mais rápido do que há ${weeks.length} semanas.` : "Mais rápido é a linha subindo. Cada ponto é o pace médio de uma semana.";
+  const cards = [
+    <ChartCard key="pace" title="Pace médio" value={lastPace ? `${formatPace(lastPace)} /km` : undefined} caption={paced.length > 1 ? paceCaption : undefined}>
+      <PaceTrend weeks={weeks} />
+    </ChartCard>,
+    <ChartCard key="km" title="Km por semana" value={recent.length ? `${formatKm(recent[recent.length - 1].distanceMeters)} km` : undefined} caption="A barra verde é a semana atual. O tracejado mostra quanto falta para igualar sua melhor semana.">
+      <WeekKmBars weeks={recent} />
+    </ChartCard>,
+    <ChartCard key="goal" title={`Rumo aos ${goal.name}`} value={`${Math.round(share * 100)}%`}>
+      <GoalTrack share={share} />
+      <View style={styles.goalLabels}><Text style={styles.goalLabel}>maior corrida: {formatKm(longest)} km</Text><Text style={styles.goalLabel}>{goal.name}</Text></View>
+    </ChartCard>,
+  ];
+  if (!weeks.length) return <View style={styles.stack}><Skeleton height={160} radius={14} /><Skeleton height={160} radius={14} /></View>;
+  return <View style={desktop ? styles.trendGrid : styles.stack}>{cards.map((card) => <View key={card.key} style={desktop && styles.trendCell}>{card}</View>)}</View>;
+}
+
 function HeroMetric({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.heroMetric}>
@@ -163,10 +200,10 @@ function HeroMetric({ value, label }: { value: string; label: string }) {
   );
 }
 
-function RecordCard({ icon, label, hint, value, tone }: { icon: RecordIcon; label: string; hint: string; value: string; tone: string }) {
+function RecordCard({ icon, label, hint, value }: { icon: RecordIcon; label: string; hint: string; value: string }) {
   return (
-    <View style={[styles.record, { backgroundColor: tone }]}>
-      <View style={styles.recordIcon}><Ionicons name={icon} size={17} color={C.ink} /></View>
+    <View style={styles.record}>
+      <View style={styles.recordIcon}><Ionicons name={icon} size={17} color={C.lime} /></View>
       <Text style={styles.recordValue}>{value}</Text>
       <Text style={styles.recordLabel}>{label}</Text>
       <Text style={styles.recordHint}>{hint}</Text>
@@ -175,46 +212,50 @@ function RecordCard({ icon, label, hint, value, tone }: { icon: RecordIcon; labe
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: 14 },
+  stack: { gap: 12 },
+  trendGrid: { flexDirection: "row", gap: 16, alignItems: "stretch" },
+  trendCell: { flex: 1, minWidth: 0 },
+  goalLabels: { flexDirection: "row", justifyContent: "space-between" },
+  goalLabel: { color: C.muted, fontFamily: F.text, fontSize: 12 },
   gap: { height: 28 },
   gapNone: { height: 0 },
   selectorDesktop: { maxWidth: 440 },
-  weekNote: { color: C.muted, fontSize: 11, fontWeight: "700", marginTop: 8 },
+  weekNote: { color: C.muted, fontSize: 12, fontFamily: F.text, marginTop: 8 },
   split: { flexDirection: "row", alignItems: "flex-start", gap: 20 },
   side: { flex: 1, minWidth: 0, marginTop: 16 },
   heroDesktop: { flex: 1.35, minWidth: 0 },
 
-  hero: { marginTop: 16, padding: 18, borderRadius: 14, backgroundColor: C.ink, boxShadow: "0px 16px 36px rgba(30, 33, 35, 0.22)" },
+  hero: { marginTop: 16, padding: 18, borderRadius: 14, backgroundColor: C.road },
   heroTop: { marginBottom: 14 },
-  heroEyebrow: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 1.3, marginBottom: 6 },
+  heroEyebrow: { color: C.inkSoft, fontFamily: F.displayBold, fontSize: 16, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 },
   heroValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroValue: { color: C.white, fontSize: 34, lineHeight: 38, fontFamily: F.display, letterSpacing: 0 },
-  heroUnit: { color: "rgba(255,255,255,0.6)", fontSize: 16, fontWeight: "800", marginTop: 12, marginRight: 4 },
-  heroRange: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600", marginTop: 2 },
-  heroMetrics: { flexDirection: "row", marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" },
+  heroValue: { color: C.ink, fontSize: 40, lineHeight: 42, fontFamily: F.display, ...NUM },
+  heroUnit: { color: C.muted, fontSize: 16, fontFamily: F.textSemi, marginTop: 12, marginRight: 4 },
+  heroRange: { color: C.muted, fontSize: 13, fontFamily: F.text, marginTop: 2 },
+  heroMetrics: { flexDirection: "row", marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.line },
   heroMetric: { flex: 1, alignItems: "center", gap: 3 },
-  heroMetricValue: { color: C.white, fontSize: 17, fontWeight: "900" },
-  heroMetricLabel: { color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: "700" },
+  heroMetricValue: { color: C.ink, fontSize: 22, fontFamily: F.displayBold, ...NUM },
+  heroMetricLabel: { color: C.muted, fontSize: 12, fontFamily: F.text },
 
   records: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  record: { flexBasis: "47%", flexGrow: 1, padding: 16, borderRadius: 14, gap: 4 },
-  recordIcon: { width: 34, height: 34, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.7)", marginBottom: 10 },
-  recordValue: { color: C.ink, fontSize: 20, fontFamily: F.display, letterSpacing: 0 },
-  recordLabel: { color: C.ink, fontSize: 12, fontWeight: "800" },
-  recordHint: { color: C.inkSoft, fontSize: 11, lineHeight: 15, fontWeight: "600" },
+  record: { flexBasis: "47%", flexGrow: 1, padding: 16, borderRadius: 14, gap: 4, backgroundColor: C.road },
+  recordIcon: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: C.asphalt, marginBottom: 10 },
+  recordValue: { color: C.ink, fontSize: 26, fontFamily: F.displayBold, ...NUM },
+  recordLabel: { color: C.ink, fontSize: 14, fontFamily: F.textBold },
+  recordHint: { color: C.muted, fontSize: 12, lineHeight: 16, fontFamily: F.text },
 
-  consistency: { flexDirection: "row", alignItems: "center", gap: 18, padding: 18, borderRadius: 14, backgroundColor: C.white, boxShadow: "0px 10px 24px rgba(30, 33, 35, 0.08)" },
+  consistency: { flexDirection: "row", alignItems: "center", gap: 18, padding: 18, borderRadius: 14, backgroundColor: C.road },
   consistencyCopy: { flex: 1, gap: 6 },
-  consistencyTitle: { color: C.ink, fontSize: 16, fontWeight: "900" },
-  consistencyText: { color: C.inkSoft, fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  consistencyTitle: { color: C.ink, fontSize: 16, fontFamily: F.textBold },
+  consistencyText: { color: C.muted, fontSize: 14, lineHeight: 20, fontFamily: F.text },
 
-  planCard: { padding: 18, borderRadius: 14, backgroundColor: C.sand, gap: 10 },
+  planCard: { padding: 18, borderRadius: 14, backgroundColor: C.road, gap: 10 },
   planTop: { flexDirection: "row", alignItems: "baseline", gap: 8 },
   planValue: { color: C.ink, fontSize: 26, fontFamily: F.display, letterSpacing: 0 },
-  planLabel: { color: C.inkSoft, fontSize: 13, fontWeight: "700" },
-  planText: { color: C.inkSoft, fontSize: 12, lineHeight: 18, fontWeight: "600" },
-  track: { height: 8, borderRadius: 8, overflow: "hidden", backgroundColor: "rgba(43,46,48,0.1)" },
-  trackFill: { height: "100%", borderRadius: 8, backgroundColor: C.ink },
+  planLabel: { color: C.inkSoft, fontSize: 14, fontFamily: F.textSemi },
+  planText: { color: C.muted, fontSize: 13, lineHeight: 18, fontFamily: F.text },
+  track: { height: 10, borderRadius: 5, overflow: "hidden", backgroundColor: C.stone },
+  trackFill: { height: "100%", borderRadius: 5, backgroundColor: C.asphalt },
 
   emptyButton: { alignSelf: "stretch", marginTop: 8 },
 });

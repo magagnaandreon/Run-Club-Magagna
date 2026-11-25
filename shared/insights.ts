@@ -34,7 +34,7 @@ export type InsightTotals = {
   bestPaceSecondsPerKm: number | null;
 };
 
-export type InsightBucket = { label: string; from: string; to: string; distanceMeters: number; runs: number };
+export type InsightBucket = { label: string; from: string; to: string; distanceMeters: number; runs: number; movingSeconds?: number };
 
 export function addDays(date: string, days: number): string {
   const value = new Date(`${date}T12:00:00.000Z`);
@@ -88,7 +88,7 @@ export function inRange(entries: TrainingEntry[], from: string, to: string) {
 
 function bucket(entries: TrainingEntry[], label: string, from: string, to: string): InsightBucket {
   const inside = inRange(entries, from, to);
-  return { label, from, to, distanceMeters: inside.reduce((sum, entry) => sum + entry.distanceMeters, 0), runs: inside.length };
+  return { label, from, to, distanceMeters: inside.reduce((sum, entry) => sum + entry.distanceMeters, 0), runs: inside.length, movingSeconds: inside.reduce((sum, entry) => sum + entry.movingSeconds, 0) };
 }
 
 const WEEKDAYS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { C } from "@/components/run-ui";
+import { C, F } from "@/components/run-ui";
 import { localToday } from "@/hooks/use-insights";
 import { trpc } from "@/lib/trpc";
 
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
   rating: { flexDirection: "row", gap: 6 },
   star: { padding: 3 },
   ai: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, paddingHorizontal: 12, height: 32, borderRadius: 999, backgroundColor: C.lime },
-  aiText: { color: C.ink, fontSize: 12, fontWeight: "900" },
-  input: { minHeight: 72, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, color: C.ink, backgroundColor: C.white, fontSize: 14, fontWeight: "600", textAlignVertical: "top" },
+  aiText: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
+  input: { minHeight: 72, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, color: C.ink, backgroundColor: C.white, fontSize: 14, fontFamily: F.text, textAlignVertical: "top" },
   send: { minHeight: 49, borderRadius: 15, backgroundColor: C.cone, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
-  sendText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
+  sendText: { color: "#FFFFFF", fontSize: 13, fontFamily: F.textBold },
 });

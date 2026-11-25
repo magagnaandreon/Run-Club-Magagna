@@ -20,7 +20,7 @@ export function ProfileAvatar({
     <View
       accessible
       accessibilityLabel={imageUri ? `Foto de perfil de ${name || "usuário"}` : `Avatar de ${name || "usuário"}`}
-      style={[styles.avatar, { width: size, height: size, borderRadius: size * 0.36 }]}
+      style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
     >
       {imageUri ? (
         <Image

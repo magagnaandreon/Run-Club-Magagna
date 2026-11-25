@@ -54,6 +54,25 @@ export function Achievements() {
   );
 }
 
+/** One line for the home screen: the medal being chased and how close it is. */
+export function NextAchievement() {
+  const insights = useInsights(true, "all");
+  const period = insights.data?.period;
+  if (!period) return null;
+  const list = achievementsFrom(period);
+  const earned = list.filter((item) => item.earned).length;
+  const next = list.find((item) => !item.earned && item.goal);
+  return (
+    <View style={styles.teaser}>
+      <View style={styles.teaserRing}><Text style={styles.teaserCount}>{earned}</Text></View>
+      <View style={styles.teaserCopy}>
+        <Text style={styles.teaserTitle}>{earned} {earned === 1 ? "conquista" : "conquistas"}</Text>
+        <Text style={styles.teaserText}>{next?.goal ? `Próxima: ${next.title.toLowerCase()}, ${Math.min(99, Math.round((next.goal.have / next.goal.need) * 100))}%` : "Todas as medalhas de distância conquistadas."}</Text>
+      </View>
+    </View>
+  );
+}
+
 function Medal({ item, index }: { item: Achievement; index: number }) {
   const reduced = useReducedMotion();
   const size = 64;
@@ -85,10 +104,16 @@ function Medal({ item, index }: { item: Achievement; index: number }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: 26 },
-  card: { backgroundColor: C.road, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 16, gap: 16 },
+  wrap: { marginTop: 4 },
+  teaser: { flexDirection: "row", alignItems: "center", gap: 16, backgroundColor: C.road, borderRadius: 14, padding: 16 },
+  teaserRing: { width: 52, height: 52, borderRadius: 26, backgroundColor: C.asphalt, borderWidth: 3, borderColor: C.lime, alignItems: "center", justifyContent: "center" },
+  teaserCount: { color: C.road, fontFamily: F.display, fontSize: 22, ...NUM },
+  teaserCopy: { flex: 1, gap: 2 },
+  teaserTitle: { color: C.ink, fontFamily: F.textBold, fontSize: 16 },
+  teaserText: { color: C.muted, fontFamily: F.text, fontSize: 14 },
+  card: { backgroundColor: C.road, borderRadius: 14, padding: 16, gap: 16 },
   grid: { flexDirection: "row", flexWrap: "wrap", rowGap: 14 },
-  medal: { width: "25%", minWidth: 76, alignItems: "center", gap: 6, paddingHorizontal: 2 },
+  medal: { width: "33.33%", minWidth: 76, alignItems: "center", gap: 6, paddingHorizontal: 2 },
   medalArt: { width: 64, height: 64, alignItems: "center", justifyContent: "center" },
   badge: { position: "absolute", color: C.road, fontFamily: F.display, fontSize: 18, ...NUM },
   badgeSmall: { fontSize: 15 },

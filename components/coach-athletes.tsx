@@ -123,7 +123,7 @@ export function CoachAthletes({ onOpen, onNotice }: { onOpen: (athleteId: number
                   accessibilityLabel={`Acompanhar ${athlete.name || athlete.email}`}
                   style={({ pressed }) => [styles.follow, pressed && styles.pressed]}
                 >
-                  <Ionicons name="add" size={14} color={C.ink} />
+                  <Ionicons name="add" size={14} color="#FFFFFF" />
                   <Text style={styles.followText}>Acompanhar</Text>
                 </Pressable>
               )}
@@ -490,8 +490,8 @@ function Tag({ text, hot = false, lime = false }: { text: string; hot?: boolean;
 function Stat({ icon, label, value, hot = false }: { icon: IconName; label: string; value: string; hot?: boolean }) {
   return (
     <View style={[styles.stat, hot && styles.statHot]}>
-      <Ionicons name={icon} size={16} color={C.inkSoft} />
-      <Text style={styles.statValue}>{value}</Text>
+      <Ionicons name={icon} size={16} color={hot ? C.lime : C.onAsphaltMuted} />
+      <Text style={[styles.statValue, hot && { color: C.lime }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
@@ -503,77 +503,77 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   gap: { height: 16 },
   loading: { marginVertical: 24 },
-  muted: { color: C.muted, fontSize: 12, lineHeight: 17, fontWeight: "600" },
-  helper: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600", marginTop: 6, marginBottom: 10 },
-  notice: { color: C.ink, backgroundColor: C.lime, padding: 12, borderRadius: 14, fontSize: 13, fontWeight: "800", marginBottom: 12, overflow: "hidden" },
-  danger: { color: "#8A2A12", fontSize: 12, lineHeight: 17, fontWeight: "700" },
-  noCoach: { color: "#B4361C", fontSize: 12, fontWeight: "700" },
-  label: { color: C.ink, fontSize: 11, fontWeight: "900", marginTop: 4 },
+  muted: { color: C.muted, fontSize: 12, lineHeight: 17, fontFamily: F.text },
+  helper: { color: C.muted, fontSize: 12, lineHeight: 18, fontFamily: F.text, marginTop: 6, marginBottom: 10 },
+  notice: { color: C.ink, backgroundColor: C.stone, padding: 12, borderRadius: 12, fontSize: 14, fontFamily: F.textSemi, marginBottom: 12, overflow: "hidden" },
+  danger: { color: "#8A2A12", fontSize: 12, lineHeight: 17, fontFamily: F.textSemi },
+  noCoach: { color: "#B4361C", fontSize: 12, fontFamily: F.textSemi },
+  label: { color: C.ink, fontSize: 12, fontFamily: F.textBold, marginTop: 4 },
 
   listWrap: { gap: 10 },
-  search: { minHeight: 44, borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 13, color: C.ink, backgroundColor: C.white, fontSize: 13, fontWeight: "600" },
+  search: { minHeight: 46, borderRadius: 12, paddingHorizontal: 14, color: C.ink, backgroundColor: C.road, fontSize: 15, fontFamily: F.text },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: { minHeight: 32, justifyContent: "center", paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
-  chipOn: { backgroundColor: C.ink, borderColor: C.ink },
-  chipText: { color: C.ink, fontSize: 12, fontWeight: "800" },
-  chipTextOn: { color: C.white },
-  row: { gap: 9, padding: 13, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
+  chip: { minHeight: 36, justifyContent: "center", paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: "#B9BCB6", backgroundColor: "transparent" },
+  chipOn: { backgroundColor: C.asphalt, borderColor: C.asphalt },
+  chipText: { color: C.inkSoft, fontSize: 14, fontFamily: F.textSemi },
+  chipTextOn: { color: C.road },
+  row: { gap: 9, padding: 14, borderRadius: 14, backgroundColor: C.road },
   rowMine: { borderColor: C.limeDeep },
   rowTop: { flexDirection: "row", alignItems: "center", gap: 11 },
-  rowName: { color: C.ink, fontSize: 15, lineHeight: 20, fontWeight: "900" },
-  follow: { flexDirection: "row", alignItems: "center", gap: 3, height: 32, paddingHorizontal: 10, borderRadius: 999, backgroundColor: C.lime },
-  followText: { color: C.ink, fontSize: 11, fontWeight: "900" },
+  rowName: { color: C.ink, fontSize: 15, lineHeight: 20, fontFamily: F.textBold },
+  follow: { flexDirection: "row", alignItems: "center", gap: 3, height: 34, paddingHorizontal: 12, borderRadius: 10, backgroundColor: C.cone },
+  followText: { color: "#FFFFFF", fontSize: 13, fontFamily: F.textBold },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 5 },
   waiting: { flexDirection: "row", alignItems: "center", gap: 7 },
   tag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: C.paper },
-  tagHot: { backgroundColor: "#F9D5CC" },
+  tagHot: { backgroundColor: C.coneTint },
   tagLime: { backgroundColor: C.lime },
-  tagText: { color: C.inkSoft, fontSize: 11, fontWeight: "800" },
+  tagText: { color: C.inkSoft, fontSize: 12, fontFamily: F.textBold },
 
   identity: { flexDirection: "row", alignItems: "center", gap: 13, marginTop: 8, marginBottom: 14 },
-  sheetName: { color: C.ink, fontSize: 24, lineHeight: 29, fontFamily: F.display, letterSpacing: 0 },
-  followCard: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 12 },
-  cardLabel: { color: C.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1 },
+  sheetName: { color: C.ink, fontSize: 30, lineHeight: 32, fontFamily: F.display, textTransform: "uppercase" },
+  followCard: { gap: 8, padding: 16, borderRadius: 14, backgroundColor: C.road, marginBottom: 12 },
+  cardLabel: { color: C.muted, fontSize: 11, fontFamily: F.textBold, letterSpacing: 1 },
   coachRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  coachName: { flex: 1, color: C.ink, fontSize: 14, fontWeight: "800" },
-  followButton: { minHeight: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", paddingHorizontal: 12, backgroundColor: C.cone, marginTop: 2 },
-  followButtonOff: { backgroundColor: C.paper },
+  coachName: { flex: 1, color: C.ink, fontSize: 14, fontFamily: F.textBold },
+  followButton: { minHeight: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 12, backgroundColor: C.cone, marginTop: 2 },
+  followButtonOff: { backgroundColor: C.stone },
   followButtonDanger: { backgroundColor: "#B4361C" },
-  followButtonText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
+  followButtonText: { color: "#FFFFFF", fontSize: 16, fontFamily: F.displayBold, letterSpacing: 1, textTransform: "uppercase" },
   followButtonTextDanger: { color: C.white },
   followButtonTextOff: { color: C.ink },
 
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 },
-  action: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 38, paddingHorizontal: 13, borderRadius: 999, backgroundColor: C.white, borderWidth: 1, borderColor: C.line },
+  action: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 38, paddingHorizontal: 14, borderRadius: 10, backgroundColor: C.stone },
   actionPrimary: { backgroundColor: C.cone, borderColor: C.cone },
   actionDanger: { backgroundColor: "#B4361C", borderColor: "#B4361C" },
-  actionText: { color: C.ink, fontSize: 12, fontWeight: "800" },
+  actionText: { color: C.ink, fontSize: 14, fontFamily: F.textSemi },
   actionTextPrimary: { color: "#FFFFFF" },
   actionTextDanger: { color: C.white },
-  panel: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 12 },
-  pick: { flexDirection: "row", alignItems: "center", gap: 10, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: C.line, backgroundColor: C.white },
-  pickOn: { borderColor: C.limeDeep, backgroundColor: "#F5F9E4" },
-  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 48, borderRadius: 15, backgroundColor: C.cone, marginTop: 6, paddingHorizontal: 14 },
-  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
+  panel: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: C.road, marginBottom: 12 },
+  pick: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, backgroundColor: C.road },
+  pickOn: { backgroundColor: C.stone, borderWidth: 2, borderColor: C.asphalt },
+  primary: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 48, borderRadius: 12, backgroundColor: C.cone, marginTop: 6, paddingHorizontal: 14 },
+  primaryText: { color: "#FFFFFF", fontSize: 18, fontFamily: F.displayBold, letterSpacing: 1.5, textTransform: "uppercase" },
 
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  stat: { flexGrow: 1, flexBasis: "46%", gap: 3, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD" },
-  statHot: { backgroundColor: "#FBE7E1", borderColor: "#F6C4B5" },
-  statValue: { color: C.ink, fontSize: 18, fontWeight: "900", letterSpacing: -0.4 },
-  statLabel: { color: C.muted, fontSize: 11, fontWeight: "700" },
-  chart: { padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 8 },
+  stat: { flexGrow: 1, flexBasis: "46%", gap: 3, padding: 14, borderRadius: 12, backgroundColor: C.asphalt },
+  statHot: { backgroundColor: C.asphaltSoft },
+  statValue: { color: C.road, fontSize: 26, fontFamily: F.displayBold },
+  statLabel: { color: C.onAsphaltMuted, fontSize: 12, fontFamily: F.text },
+  chart: { padding: 14, borderRadius: 14, backgroundColor: C.road, marginBottom: 8 },
 
-  send: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 8 },
+  send: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.white, marginBottom: 8 },
   sendTop: { flexDirection: "row", alignItems: "center", gap: 10 },
-  sendTitle: { color: C.ink, fontSize: 14, fontWeight: "900" },
+  sendTitle: { color: C.ink, fontSize: 14, fontFamily: F.textBold },
   status: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 },
   statusDone: { backgroundColor: C.lime },
-  statusOpen: { backgroundColor: "#F9D5CC" },
-  statusText: { color: C.ink, fontSize: 10, fontWeight: "900" },
+  statusOpen: { backgroundColor: C.coneTint },
+  statusText: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
 
-  run: { gap: 10, padding: 14, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: "#E2E3DD", marginBottom: 10 },
+  run: { gap: 10, padding: 16, borderRadius: 14, backgroundColor: C.road, marginBottom: 10 },
   runOpen: { borderColor: "#F6C4B5" },
-  note: { color: C.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
-  reviewed: { padding: 12, borderRadius: 14, backgroundColor: C.sky, gap: 4 },
-  reviewedTitle: { color: C.ink, fontSize: 11, fontWeight: "900" },
+  note: { color: C.muted, fontSize: 12, lineHeight: 18, fontFamily: F.text },
+  reviewed: { padding: 12, borderRadius: 12, backgroundColor: C.coneTint, gap: 4 },
+  reviewedTitle: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 import { Redirect, Tabs } from "expo-router";
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { C, F } from "@/components/run-ui";
@@ -44,6 +44,7 @@ export default function TabLayout() {
         tabBarLabelPosition: "below-icon",
         tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: bottomPadding }],
         tabBarLabelStyle: styles.tabLabel,
+        tabBarLabel: ({ focused, children }) => <TabLabel focused={focused} label={children} />,
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Hoje", tabBarIcon: ({ focused }) => <TabChip focused={focused} name={focused ? "home" : "home-outline"} /> }} />
@@ -58,16 +59,26 @@ export default function TabLayout() {
   );
 }
 
-/** The active tab is a patch of asphalt with a lime lane line under it. */
 function TabChip({ focused, name }: { focused: boolean; name: ComponentProps<typeof Ionicons>["name"] }) {
-  return <View style={[styles.chip, focused && styles.chipOn]}><Ionicons name={name} size={20} color={focused ? C.road : C.muted} />{focused ? <View style={styles.chipLine} /> : null}</View>;
+  return <Ionicons name={name} size={22} color={focused ? C.ink : C.muted} />;
+}
+
+/** The active tab gets a short lime line under its name. */
+function TabLabel({ focused, label }: { focused: boolean; label: string }) {
+  return (
+    <View style={styles.label}>
+      <Text style={[styles.tabLabel, { color: focused ? C.ink : C.muted }, !focused && styles.tabLabelOff]}>{label}</Text>
+      <View style={[styles.labelLine, focused && styles.labelLineOn]} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.paper },
   tabBar: { paddingTop: 8, backgroundColor: C.road, borderTopColor: C.line, borderTopWidth: 1, elevation: 0 },
-  tabLabel: { fontFamily: F.textBold, fontSize: 11, marginTop: 2 },
-  chip: { width: 46, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  chipOn: { backgroundColor: C.asphalt },
-  chipLine: { position: "absolute", left: 0, right: 0, bottom: 0, height: 4, backgroundColor: C.lime },
+  tabLabel: { fontFamily: F.textBold, fontSize: 12, marginTop: 2 },
+  tabLabelOff: { fontFamily: F.textSemi },
+  label: { alignItems: "center", gap: 4 },
+  labelLine: { width: 18, height: 3, borderRadius: 2 },
+  labelLineOn: { backgroundColor: C.lime },
 });

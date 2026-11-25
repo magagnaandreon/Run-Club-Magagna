@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { formatDay } from "@/components/dashboard-ui";
-import { C } from "@/components/run-ui";
+import { C, F } from "@/components/run-ui";
 import { trpc } from "@/lib/trpc";
 import type { AiWeekDay, AiWorkout } from "@/shared/coach-ai";
 
@@ -125,22 +125,22 @@ const styles = StyleSheet.create({
   card: { padding: 18, borderRadius: 14, backgroundColor: C.ink, gap: 10, marginBottom: 14 },
   header: { flexDirection: "row", alignItems: "center", gap: 8 },
   badge: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
-  title: { color: C.white, fontSize: 15, fontWeight: "900" },
-  hint: { marginLeft: "auto", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: "700" },
-  text: { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 18, fontWeight: "600" },
-  textMuted: { color: "rgba(255,255,255,0.55)", fontSize: 11, lineHeight: 16, fontWeight: "600" },
-  message: { color: C.lime, fontSize: 12, lineHeight: 18, fontWeight: "800" },
-  input: { minHeight: 44, borderRadius: 13, paddingHorizontal: 13, color: C.white, backgroundColor: "rgba(255,255,255,0.08)", fontSize: 13, fontWeight: "600" },
+  title: { color: C.white, fontSize: 15, fontFamily: F.textBold },
+  hint: { marginLeft: "auto", color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: F.textSemi },
+  text: { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 18, fontFamily: F.text },
+  textMuted: { color: "rgba(255,255,255,0.55)", fontSize: 12, lineHeight: 16, fontFamily: F.text },
+  message: { color: C.lime, fontSize: 12, lineHeight: 18, fontFamily: F.textBold },
+  input: { minHeight: 44, borderRadius: 13, paddingHorizontal: 13, color: C.white, backgroundColor: "rgba(255,255,255,0.08)", fontSize: 13, fontFamily: F.text },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   primary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.cone },
-  primaryText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
+  primaryText: { color: "#FFFFFF", fontSize: 13, fontFamily: F.textBold },
   secondary: { flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: "rgba(215,247,82,0.5)" },
-  secondaryText: { color: C.lime, fontSize: 13, fontWeight: "900" },
+  secondaryText: { color: C.lime, fontSize: 13, fontFamily: F.textBold },
   week: { gap: 8, marginTop: 4 },
   day: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.06)" },
   dayCopy: { flex: 1, gap: 2 },
-  dayDate: { color: C.lime, fontSize: 10, fontWeight: "900", letterSpacing: 0.4 },
-  dayTitle: { color: C.white, fontSize: 14, fontWeight: "900" },
+  dayDate: { color: C.lime, fontSize: 11, fontFamily: F.textBold, letterSpacing: 0.4 },
+  dayTitle: { color: C.white, fontSize: 14, fontFamily: F.textBold },
   use: { paddingHorizontal: 14, height: 34, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: C.lime },
-  useText: { color: C.ink, fontSize: 12, fontWeight: "900" },
+  useText: { color: C.ink, fontSize: 12, fontFamily: F.textBold },
 });
