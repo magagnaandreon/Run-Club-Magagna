@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
-import { formatKm, formatPace } from "@/components/dashboard-ui";
+import { formatDay, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
 import { C, F, NUM } from "@/components/run-ui";
 import type { InsightBucket } from "@/shared/insights";
 
@@ -24,6 +24,63 @@ export function ChartCard({ title, value, caption, children }: { title: string; 
 }
 
 /**
+ * Invisible columns over a chart: the mouse (or a tap, on phones) picks one, and the chart shows its details.
+ * `gap` matches the chart's own gap so each column sits over its bar.
+ */
+export function HoverColumns({ count, active, onChange, gap = 0, label }: { count: number; active: number | null; onChange: (index: number | null) => void; gap?: number; label?: (index: number) => string }) {
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.columns, { gap }]}>
+      {Array.from({ length: count }, (_, index) => (
+        <Pressable
+          key={index}
+          onHoverIn={() => onChange(index)}
+          onHoverOut={() => onChange(null)}
+          onPress={() => onChange(active === index ? null : index)}
+          accessibilityRole="button"
+          accessibilityLabel={label?.(index)}
+          style={styles.column}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** A small dark label that floats over the chart at `x` (px), kept inside the chart's width. */
+export function ChartTip({ x, width, title, lines, top = 0, onDark = false }: { x: number; width: number; title: string; lines: string[]; top?: number; onDark?: boolean }) {
+  const tipWidth = Math.min(180, width);
+  const left = Math.max(0, Math.min(width - tipWidth, x - tipWidth / 2));
+  return (
+    <View pointerEvents="none" style={[styles.tip, onDark && styles.tipOnDark, { left, top, width: tipWidth }]}>
+      <Text style={[styles.tipTitle, onDark && styles.tipTitleOnDark]}>{title}</Text>
+      {lines.map((line, index) => <Text key={index} style={[styles.tipLine, index === 0 && styles.tipLineStrong, onDark && styles.tipLineOnDark]}>{line}</Text>)}
+    </View>
+  );
+}
+
+const shortDate = (date: string) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+
+/** "17/11 a 23/11" for a week bucket, the full day for a single day. */
+function bucketRange(bucket: InsightBucket) {
+  return bucket.from === bucket.to ? formatDay(bucket.from) : `${shortDate(bucket.from)} a ${shortDate(bucket.to)}`;
+}
+
+/** What a bucket holds, in the words the tooltips use. */
+export function bucketLines(bucket: InsightBucket) {
+  const pace = bucket.distanceMeters >= 200 && bucket.movingSeconds ? bucket.movingSeconds / (bucket.distanceMeters / 1000) : null;
+  if (!bucket.runs) return ["sem corridas"];
+  return [
+    `${formatKm(bucket.distanceMeters)} km · ${bucket.runs} ${bucket.runs === 1 ? "corrida" : "corridas"}`,
+    ...(pace ? [`pace médio ${formatPace(pace)} /km`] : []),
+    ...(bucket.movingSeconds ? [`${formatDuration(bucket.movingSeconds)} em movimento`] : []),
+  ];
+}
+
+/** For the pace chart the pace leads the tooltip. */
+function paceFirst(lines: string[]) {
+  return [...lines.filter((line) => line.startsWith("pace")), ...lines.filter((line) => !line.startsWith("pace"))];
+}
+
+/**
  * Km per Monday-to-Sunday week. Past weeks are gray, the best one asphalt, the current one lime
  * inside a dashed outline that shows how far it is from the best week.
  */
@@ -39,9 +96,11 @@ export function WeekKmBars({ weeks, height = 104 }: { weeks: InsightBucket[]; he
   const best = past.length ? past.reduce((top, week, index) => (week.distanceMeters > past[top].distanceMeters ? index : top), 0) : -1;
   const max = Math.max(1, ...weeks.map((week) => week.distanceMeters));
   const bestMeters = best >= 0 ? past[best].distanceMeters : 0;
-  const label = `Quilômetros por semana: ${weeks.map((week) => formatKm(week.distanceMeters)).join(", ")}${weeks.length ? " até agora" : ""}.`;
+  const [active, setActive] = useState<number | null>(null);
+  const [width, setWidth] = useState(0);
+  const slot = weeks.length ? (width - 12 * (weeks.length - 1)) / weeks.length : 0;
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={label}>
+    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       <View style={[styles.bars, { height }]}>
         {weeks.map((week, index) => {
           const isCurrent = index === current;
@@ -49,10 +108,12 @@ export function WeekKmBars({ weeks, height = 104 }: { weeks: InsightBucket[]; he
           return (
             <View key={week.from} style={styles.barSlot}>
               {isCurrent && bestMeters > week.distanceMeters ? <View style={[styles.goal, { height: `${(bestMeters / max) * 100}%` }]} /> : null}
-              <Animated.View style={[styles.bar, { height: `${week.distanceMeters ? Math.max(4, share * 100) : 0}%`, transformOrigin: "bottom" }, isCurrent ? styles.barCurrent : index === best ? styles.barBest : styles.barPast, growStyle]} />
+              <Animated.View style={[styles.bar, { height: `${week.distanceMeters ? Math.max(4, share * 100) : 0}%`, transformOrigin: "bottom" }, isCurrent ? styles.barCurrent : index === best ? styles.barBest : styles.barPast, active !== null && active !== index && styles.dim, growStyle]} />
             </View>
           );
         })}
+        <HoverColumns count={weeks.length} active={active} onChange={setActive} gap={12} label={(index) => `${bucketRange(weeks[index])}: ${bucketLines(weeks[index]).join(", ")}`} />
+        {active !== null && width ? <ChartTip x={active * (slot + 12) + slot / 2} width={width} title={`Semana de ${bucketRange(weeks[active])}`} lines={bucketLines(weeks[active])} /> : null}
       </View>
       <View style={styles.barLabels}>
         {weeks.map((week, index) => (
@@ -74,6 +135,7 @@ export function PaceTrend({ weeks, height = 110 }: { weeks: InsightBucket[]; hei
   const points = weeks
     .map((week, index) => ({ index, pace: week.distanceMeters >= 500 && week.movingSeconds ? week.movingSeconds / (week.distanceMeters / 1000) : null }))
     .filter((point): point is { index: number; pace: number } => point.pace !== null);
+  const [active, setActive] = useState<number | null>(null);
   const length = 2000;
   const animated = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - draw.value) }));
   if (points.length < 2) return <Text style={styles.caption}>Corra em pelo menos duas semanas para ver a linha do pace.</Text>;
@@ -88,14 +150,18 @@ export function PaceTrend({ weeks, height = 110 }: { weeks: InsightBucket[]; hei
   const last = points[points.length - 1];
   const first = points[0];
   return (
-    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} accessible accessibilityRole="image" accessibilityLabel={`Pace médio por semana: de ${formatPace(first.pace)} para ${formatPace(last.pace)} por quilômetro.`}>
+    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} accessibilityLabel={`Pace médio por semana: de ${formatPace(first.pace)} para ${formatPace(last.pace)} por quilômetro.`}>
       {width ? (
         <Svg width={width} height={height}>
+          {active !== null ? <Line x1={x(active)} x2={x(active)} y1={top - 6} y2={bottom} stroke="#9EA19C" strokeWidth={1} strokeDasharray="3 3" /> : null}
           {[top + 6, (top + bottom) / 2, bottom].map((lineY) => <Line key={lineY} x1={0} x2={width} y1={lineY} y2={lineY} stroke={C.stone} strokeWidth={1} />)}
           <AnimatedPath d={d} fill="none" stroke={C.asphalt} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${length} ${length}`} animatedProps={animated} />
           <Circle cx={x(last.index)} cy={y(last.pace)} r={6} fill={C.lime} stroke={C.asphalt} strokeWidth={2} />
+          {active !== null && points.some((point) => point.index === active) && active !== last.index ? <Circle cx={x(active)} cy={y(points.find((point) => point.index === active)!.pace)} r={5} fill={C.road} stroke={C.asphalt} strokeWidth={2.5} /> : null}
         </Svg>
       ) : <View style={{ height }} />}
+      {width ? <HoverColumns count={weeks.length} active={active} onChange={setActive} label={(index) => `Semana ${bucketRange(weeks[index])}: ${bucketLines(weeks[index]).join(", ")}`} /> : null}
+      {active !== null && width ? <ChartTip x={x(active)} width={width} title={`Semana de ${bucketRange(weeks[active])}`} lines={paceFirst(bucketLines(weeks[active]))} /> : null}
       <View style={styles.paceLabels}><Text style={styles.axisLabel}>{weeks.length} sem. atrás</Text><Text style={styles.axisLabel}>esta semana</Text></View>
     </View>
   );
@@ -114,6 +180,16 @@ export function GoalTrack({ share }: { share: number }) {
 }
 
 const styles = StyleSheet.create({
+  columns: { flexDirection: "row" },
+  column: { flex: 1, height: "100%" },
+  dim: { opacity: 0.45 },
+  tip: { position: "absolute", zIndex: 5, backgroundColor: C.asphalt, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, gap: 1 },
+  tipTitle: { color: C.onAsphaltMuted, fontFamily: F.textSemi, fontSize: 12 },
+  tipLine: { color: C.road, fontFamily: F.text, fontSize: 13, ...NUM },
+  tipLineStrong: { color: C.lime, fontFamily: F.textBold, fontSize: 15 },
+  tipOnDark: { backgroundColor: C.road },
+  tipTitleOnDark: { color: C.muted },
+  tipLineOnDark: { color: C.ink },
   card: { backgroundColor: C.road, borderRadius: 14, padding: 16, gap: 10 },
   cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 },
   cardTitle: { color: C.inkSoft, fontFamily: F.displayBold, fontSize: 16, letterSpacing: 1, textTransform: "uppercase" },

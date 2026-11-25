@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 
+import { ChartTip } from "@/components/run-charts";
 import { C, F } from "@/components/run-ui";
 import { addDays } from "@/shared/insights";
 
@@ -10,7 +11,11 @@ export type WeekDay = "done" | "planned" | "missed" | "free";
 const LABELS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
 
 /** Monday to Sunday as one line on the asphalt: lime up to today, today ringed, planned days hollow. */
-export function WeekLine({ weekFrom, today, days, light = false }: { weekFrom: string; today: string; days: WeekDay[]; light?: boolean }) {
+const STATUS: Record<WeekDay, string> = { done: "treino feito", planned: "treino marcado", missed: "treino não feito", free: "dia livre" };
+
+/** `titles` names the coach's workout of each day, shown when the mouse (or a tap) is on that day. */
+export function WeekLine({ weekFrom, today, days, light = false, titles }: { weekFrom: string; today: string; days: WeekDay[]; light?: boolean; titles?: (string | null)[] }) {
+  const [active, setActive] = useState<number | null>(null);
   const reduced = useReducedMotion();
   const todayIndex = Math.max(0, Math.min(6, Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${weekFrom}T12:00:00Z`)) / 86400000)));
   const target = todayIndex / 6;
@@ -26,17 +31,26 @@ export function WeekLine({ weekFrom, today, days, light = false }: { weekFrom: s
   const label = `Semana de segunda a domingo: ${doneCount} de ${plannedCount} treinos feitos, hoje é ${LABELS[todayIndex]}.`;
 
   return (
-    <View style={[styles.wrap, light && styles.wrapLight]} accessible accessibilityRole="image" accessibilityLabel={label}>
+    <View style={[styles.wrap, light && styles.wrapLight]} accessibilityLabel={label}>
       <View style={styles.lineRow} onLayout={(event) => setSpan(Math.max(0, event.nativeEvent.layout.width - DOT))}>
         <View style={[styles.track, light && styles.trackLight]} />
         <Animated.View style={[styles.fill, light && styles.fillLight, fill]} />
         <View style={styles.dots}>
           {days.map((day, index) => (
-            <View key={index} style={styles.dotSlot}>
+            <Pressable
+              key={index}
+              style={styles.dotSlot}
+              hitSlop={{ top: 12, bottom: 22, left: 14, right: 14 }}
+              onHoverIn={() => setActive(index)}
+              onHoverOut={() => setActive((current) => (current === index ? null : current))}
+              onPress={() => setActive(active === index ? null : index)}
+              accessibilityLabel={`${dayName(weekFrom, index)}: ${STATUS[day]}${titles?.[index] ? `, ${titles[index]}` : ""}`}
+            >
               <View style={[styles.dot, index === todayIndex ? (light ? styles.dotTodayLight : styles.dotToday) : day === "done" ? [styles.dotDone, light && styles.dotDoneLight] : day === "planned" ? (light ? styles.dotPlannedLight : styles.dotPlanned) : day === "missed" ? styles.dotMissed : (light ? styles.dotFreeLight : styles.dotFree)]} />
-            </View>
+            </Pressable>
           ))}
         </View>
+        {active !== null && span ? <ChartTip onDark={!light} x={(active * span) / 6 + DOT / 2} width={span + DOT} top={DOT + 6} title={dayName(weekFrom, active)} lines={[STATUS[days[active]], ...(titles?.[active] ? [titles[active] as string] : [])]} /> : null}
       </View>
       <View style={styles.labels}>
         {LABELS.map((name, index) => (
@@ -48,6 +62,10 @@ export function WeekLine({ weekFrom, today, days, light = false }: { weekFrom: s
   );
 }
 
+function dayName(weekFrom: string, index: number) {
+  return new Date(`${addDays(weekFrom, index)}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).replace(/\./g, "");
+}
+
 function formatRange(from: string) {
   const fmt = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "numeric", month: "short", timeZone: "UTC" }).replace(".", "");
   return `${fmt(from)} a ${fmt(addDays(from, 6))}`;
@@ -57,7 +75,7 @@ const DOT = 18;
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 20, gap: 8 },
-  lineRow: { height: DOT, justifyContent: "center", marginHorizontal: 0 },
+  lineRow: { height: DOT, justifyContent: "center", marginHorizontal: 0, zIndex: 2 },
   track: { position: "absolute", left: DOT / 2, right: DOT / 2, height: 5, borderRadius: 3, backgroundColor: C.asphaltSoft },
   fill: { position: "absolute", left: DOT / 2, height: 5, borderRadius: 3, backgroundColor: C.lime },
   dots: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },

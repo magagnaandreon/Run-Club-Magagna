@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import * as ExpoLinking from "expo-linking";
-import Svg, { Polyline } from "react-native-svg";
+import Svg, { Line, Polyline } from "react-native-svg";
 import { useRouter } from "expo-router";
 
+import { ChartTip, HoverColumns } from "@/components/run-charts";
 import { BackButton, C, CoachNote, Pill, PrimaryButton, Screen, SectionTitle, F } from "@/components/run-ui";
 import { MemberGate } from "@/components/member-gate";
 import { appWebUrl } from "@/constants/oauth";
@@ -64,22 +65,31 @@ function MetricTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Sparkline({ values }: { values: number[] }) {
-  const points = useMemo(() => {
+/** The stream along the run; the mouse (or a tap) reads the value at that point of the run. */
+function Sparkline({ values, unit, digits }: { values: number[]; unit: string; digits: number }) {
+  const [active, setActive] = useState<number | null>(null);
+  const [width, setWidth] = useState(0);
+  const sampled = useMemo(() => {
     const finite = values.filter((value) => Number.isFinite(value));
-    if (finite.length < 2) return "";
-    const sampled = downsampleSeries(finite, 100);
-    const low = Math.min(...sampled);
-    const high = Math.max(...sampled);
-    const range = high - low || 1;
-    return sampled.map((value, index) => {
-      const x = (index / Math.max(sampled.length - 1, 1)) * 316 + 2;
-      const y = 42 - ((value - low) / range) * 36;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
+    return finite.length < 2 ? [] : downsampleSeries(finite, 60);
   }, [values]);
-  if (!points) return null;
-  return <Svg width="100%" height={48} viewBox="0 0 320 48" preserveAspectRatio="none"><Polyline points={points} fill="none" stroke={C.limeDeep} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+  if (!sampled.length) return null;
+  const low = Math.min(...sampled);
+  const high = Math.max(...sampled);
+  const range = high - low || 1;
+  const px = (index: number) => (index / Math.max(sampled.length - 1, 1)) * 316 + 2;
+  const py = (value: number) => 42 - ((value - low) / range) * 36;
+  const points = sampled.map((value, index) => `${px(index).toFixed(1)},${py(value).toFixed(1)}`).join(" ");
+  return (
+    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      <Svg width="100%" height={48} viewBox="0 0 320 48" preserveAspectRatio="none">
+        <Polyline points={points} fill="none" stroke={C.limeDeep} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        {active !== null ? <Line x1={px(active)} x2={px(active)} y1={0} y2={48} stroke={C.asphalt} strokeWidth={1} /> : null}
+      </Svg>
+      <HoverColumns count={sampled.length} active={active} onChange={setActive} />
+      {active !== null && width ? <ChartTip x={(px(active) / 320) * width} width={width} top={-52} title={`aos ${Math.round((active / Math.max(sampled.length - 1, 1)) * 100)}% da corrida`} lines={[`${sampled[active].toFixed(digits)} ${unit}`]} /> : null}
+    </View>
+  );
 }
 
 function StreamCard({
@@ -106,7 +116,7 @@ function StreamCard({
         <Text style={styles.streamTitle}>{label}</Text>
         <Text style={styles.streamAverage}>média {average.toFixed(digits)} {unit}</Text>
       </View>
-      <Sparkline values={numbers} />
+      <Sparkline values={numbers} unit={unit} digits={digits} />
       <Text style={styles.streamRange}>mín. {min.toFixed(digits)} · máx. {max.toFixed(digits)} {unit}</Text>
     </View>
   );

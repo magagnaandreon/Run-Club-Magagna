@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState, type ComponentProps } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
-import { BarChart, Explain, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
+import { BarChart, Explain, formatDay, formatDuration, formatKm, formatPace } from "@/components/dashboard-ui";
+import { ChartTip, HoverColumns } from "@/components/run-charts";
 import { tapProps } from "@/components/run-map";
 import { C, SectionTitle, F } from "@/components/run-ui";
 import { localToday } from "@/hooks/use-insights";
@@ -68,6 +69,9 @@ function fitLine(points: { x: number; y: number }[]) {
   return (x: number) => meanY + slope * (x - meanX);
 }
 
+/** On the web an SVG point is a DOM node, so the mouse can pick it directly. */
+const hoverProps = (onHover: () => void): object => (Platform.OS === "web" ? { onMouseEnter: onHover } : {});
+
 function Scatter({ item }: { item: Correlation }) {
   const [picked, setPicked] = useState<number | null>(null);
   const factor = FACTORS[item.key];
@@ -87,7 +91,7 @@ function Scatter({ item }: { item: Correlation }) {
         <Line x1={PLOT.left} y1={PLOT.height - 1} x2={PLOT.width - PLOT.right} y2={PLOT.height - 1} stroke={C.line} strokeWidth={1} />
         <Line x1={x(minX)} y1={y(fit(minX))} x2={x(maxX)} y2={y(fit(maxX))} stroke={C.muted} strokeWidth={1.5} strokeDasharray="5 4" />
         {item.points.map((entry, index) => <Circle key={`${entry.date}-${index}`} cx={x(entry.x)} cy={y(entry.y)} r={picked === index ? 6 : 4} fill={DATA} fillOpacity={picked === index ? 1 : 0.6} stroke={C.white} strokeWidth={1} />)}
-        {item.points.map((entry, index) => <Circle key={`hit-${index}`} cx={x(entry.x)} cy={y(entry.y)} r={10} fill="transparent" {...tapProps(() => setPicked(index))} />)}
+        {item.points.map((entry, index) => <Circle key={`hit-${index}`} cx={x(entry.x)} cy={y(entry.y)} r={10} fill="transparent" {...tapProps(() => setPicked(index))} {...hoverProps(() => setPicked(index))} />)}
       </Svg>
     </View>
     <View style={styles.axisX}>
@@ -95,11 +99,13 @@ function Scatter({ item }: { item: Correlation }) {
       <Text style={styles.axisText}>{factor.axis}</Text>
       <Text style={styles.axisText}>{factor.format(maxX)}</Text>
     </View>
-    <Text style={styles.readout}>{point ? `${point.date.split("-").reverse().join("/")}: ${factor.format(point.x)} a ${formatPace(point.y)} /km` : "Toque em um ponto para ver a corrida."}</Text>
+    <Text style={styles.readout}>{point ? `${point.date.split("-").reverse().join("/")}: ${factor.format(point.x)} a ${formatPace(point.y)} /km` : Platform.OS === "web" ? "Passe o mouse ou toque em um ponto para ver a corrida." : "Toque em um ponto para ver a corrida."}</Text>
   </View>;
 }
 
 function PaceLine({ weeks }: { weeks: RunAnalysis["weeklyPace"] }) {
+  const [active, setActive] = useState<number | null>(null);
+  const [width, setWidth] = useState(0);
   const known = weeks.flatMap((week, index) => (week.pace ? [{ index, pace: week.pace }] : []));
   if (known.length < 2) return null;
   const x = scales([0, weeks.length - 1], PLOT.left, PLOT.width - PLOT.right - 4);
@@ -107,11 +113,14 @@ function PaceLine({ weeks }: { weeks: RunAnalysis["weeklyPace"] }) {
   const path = known.map((week, order) => `${order ? "L" : "M"}${x(week.index).toFixed(1)} ${y(week.pace).toFixed(1)}`).join("");
   const last = known[known.length - 1];
   return <View>
-    <View style={styles.lineChart}>
+    <View style={styles.lineChart} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       <Svg width="100%" height="100%" viewBox={`0 0 ${PLOT.width} 98`}>
+        {active !== null ? <Line x1={x(active)} x2={x(active)} y1={2} y2={96} stroke={C.muted} strokeWidth={1} strokeDasharray="3 3" /> : null}
         <Path d={path} fill="none" stroke={DATA} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-        {known.map((week) => <Circle key={week.index} cx={x(week.index)} cy={y(week.pace)} r={4} fill={DATA} stroke={C.white} strokeWidth={2} />)}
+        {known.map((week) => <Circle key={week.index} cx={x(week.index)} cy={y(week.pace)} r={week.index === active ? 6 : 4} fill={DATA} stroke={C.white} strokeWidth={2} />)}
       </Svg>
+      <HoverColumns count={weeks.length} active={active} onChange={setActive} label={(index) => `Semana de ${formatDay(weeks[index].from)}: ${weeks[index].pace ? `${formatPace(weeks[index].pace)} por km` : "sem corridas"}`} />
+      {active !== null && width ? <ChartTip x={(x(active) / PLOT.width) * width} width={width} title={`Semana de ${formatDay(weeks[active].from)}`} lines={[weeks[active].pace ? `pace ${formatPace(weeks[active].pace)} /km` : "sem corridas"]} /> : null}
     </View>
     <View style={styles.axisX}>
       <Text style={styles.axisText}>{formatPace(known[0].pace)} /km no início</Text>

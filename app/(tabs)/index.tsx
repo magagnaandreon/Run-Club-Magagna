@@ -58,18 +58,19 @@ function useWeekPlan() {
     if (planned.some((assignment) => assignment.status === "completed")) return "done";
     return date < today ? "missed" : "planned";
   });
-  return { assignments, week, days, weekFrom, today, done: week.filter((assignment) => assignment.status === "completed").length };
+  const titles = Array.from({ length: 7 }, (_, index) => week.filter((assignment) => assignment.scheduledDate === addDays(weekFrom, index)).map((assignment) => assignment.title).join(" + ") || null);
+  return { assignments, week, days, titles, weekFrom, today, done: week.filter((assignment) => assignment.status === "completed").length };
 }
 
 function AthleteStats() {
   const desktop = useIsDesktop();
   const insights = useInsights(true);
-  const { assignments, week, days, weekFrom, today, done } = useWeekPlan();
+  const { assignments, week, days, titles, weekFrom, today, done } = useWeekPlan();
   if (!assignments.data) return null;
   const streak = insights.data?.week.streakDays ?? 0;
   return (
     <>
-      {desktop ? <WeekLine weekFrom={weekFrom} today={today} days={days} /> : null}
+      {desktop ? <WeekLine weekFrom={weekFrom} today={today} days={days} titles={titles} /> : null}
       <HeaderStats>
         <HeaderStat accent value={insights.data ? `${formatKm(insights.data.week.distanceMeters)} km` : "—"} label="na semana" />
         <HeaderStat value={week.length ? `${done} de ${week.length}` : "0"} label={week.length ? "treinos feitos" : "treinos marcados"} />
@@ -83,7 +84,7 @@ function AthleteToday() {
   const router = useRouter();
   const desktop = useIsDesktop();
   const weeks = useInsights(true, "12w");
-  const { assignments, days, weekFrom, today } = useWeekPlan();
+  const { assignments, days, titles, weekFrom, today } = useWeekPlan();
   // Today or the next date first; an old workout left undone only when nothing is ahead.
   const pending = (assignments.data ?? []).filter((assignment) => assignment.status === "assigned");
   const upcoming = pending.find((assignment) => assignment.scheduledDate >= today) ?? pending[pending.length - 1];
@@ -93,7 +94,7 @@ function AthleteToday() {
   const weekCard = (
     <Settle index={0} style={styles.card}>
       <Text style={styles.cardTitle}>Sua semana</Text>
-      <WeekLine light weekFrom={weekFrom} today={today} days={days} />
+      <WeekLine light weekFrom={weekFrom} today={today} days={days} titles={titles} />
     </Settle>
   );
 

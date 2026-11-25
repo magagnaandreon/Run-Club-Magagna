@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type ComponentProps, type ReactNode, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { C, F } from "@/components/run-ui";
 import type { InsightBucket, InsightPeriod } from "@/shared/insights";
@@ -184,9 +184,10 @@ export function BarChart({ buckets, dark = false, height = 120, unit = "km", hig
         {focused ? (
           <Text style={[styles.chartHintText, dark && styles.textOnDark]}>
             {focused.from === focused.to ? formatDay(focused.from) : `${formatDay(focused.from)} – ${formatDay(focused.to)}`} · <Text style={styles.chartHintStrong}>{formatKm(focused.distanceMeters)} {unit}</Text> · {focused.runs} {focused.runs === 1 ? "corrida" : "corridas"}
+            {focused.movingSeconds && focused.distanceMeters >= 200 ? <> · pace <Text style={styles.chartHintStrong}>{formatPace(focused.movingSeconds / (focused.distanceMeters / 1000))}</Text> /km</> : null}
           </Text>
         ) : (
-          <Text style={[styles.chartHintText, dark && styles.mutedOnDark]}>Toque numa barra para ver o detalhe</Text>
+          <Text style={[styles.chartHintText, dark && styles.mutedOnDark]}>{Platform.OS === "web" ? "Passe o mouse ou toque numa barra para ver o detalhe" : "Toque numa barra para ver o detalhe"}</Text>
         )}
       </View>
       <View style={[styles.chart, { height }]}>
@@ -198,6 +199,8 @@ export function BarChart({ buckets, dark = false, height = 120, unit = "km", hig
             <Pressable
               key={`${bucket.from}-${index}`}
               onPress={() => setSelected(isFocus ? null : index)}
+              onHoverIn={() => setSelected(index)}
+              onHoverOut={() => setSelected((current) => (current === index ? null : current))}
               accessibilityLabel={`${bucket.label}: ${formatKm(bucket.distanceMeters)} ${unit}`}
               style={styles.barSlot}
             >
